@@ -1,4 +1,4 @@
-# Contribution guidelines for Chatty
+# Contribution guidelines for OmniBot
 
 First off, a huge thank you for considering contributing to Chatty! We're incredibly grateful for your interest in making this project even better.
 
@@ -12,9 +12,8 @@ Following these guidelines ensures a smooth and efficient process for everyone i
 2. Do the changes in your fork
 3. Open a pull request when you feel like the changes are finished.
 
-This lets us review your work and discuss any necessary adjustments.
+This lets me review your work and discuss any necessary adjustments.
 
-> Make sure to follow a [semantic commit message](https://gist.github.com/joshbuchea/6f47e86d2510bce28f8e7f42ae84c716) style.
 >
 > Example of a PR:
 

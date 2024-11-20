@@ -8,8 +8,8 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 import { Suspense } from "react";
 
 const metainfo = {
-  name: "Chatty",
-  title: "Chatty",
+  name: "OmniBot",
+  title: "OmniBot",
   description: "Chat with web-llm models in the browser",
   url: "https://chattyui.com",
   icons: {
@@ -27,12 +27,8 @@ export const metadata: Metadata = {
   description: metainfo.description,
   authors: [
     {
-      name: "Jakob Hoeg Mørk",
-      url: "https://jakobhoeg.dev",
-    },
-    {
-      name: "Addy Osmani",
-      url: "https://addyosmani.com",
+      name: "Ibrahim Rayamah",
+      url: "https://www.ibz04.pro/",
     },
   ],
   openGraph: {

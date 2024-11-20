@@ -5,14 +5,9 @@
 </div>
 
 <h1 align="center">
-  Chatty
+  OmniBot 
 </h1>
 
-<div align="center">
-  
-![Website](https://img.shields.io/website?url=https%3A%2F%2Fchattyui.com%2F) ![GitHub Repo stars](https://img.shields.io/github/stars/addyosmani/chatty) ![GitHub forks](https://img.shields.io/github/forks/addyosmani/chatty) ![GitHub watchers](https://img.shields.io/github/watchers/addyosmani/chatty)
-
-</div>
 
 **Chatty** is your private AI that leverages WebGPU to run large language models (LLMs) natively & privately in your browser, bringing you the most feature rich in-browser AI experience.
 
@@ -117,8 +112,5 @@ Contributions are more than welcome! However, please make sure to read the [cont
 
 # Acknowledgements & credits
 
-Chatty is built using the [WebLLM](https://github.com/mlc-ai/web-llm) project, utilizing [HuggingFace](https://huggingface.co/), open source LLMs and [LangChain](https://www.langchain.com/). We want to acknowledge their great work and thank the open source community.
+OmniBot is built using the [WebLLM](https://github.com/mlc-ai/web-llm) project, utilizing [HuggingFace](https://huggingface.co/), open source LLMs and [LangChain](https://www.langchain.com/). We want to acknowledge their great work and thank the open source community.
 
-# Authors
-
-Chatty is created and maintained by [Addy Osmani](https://github.com/addyosmani/) & [Jakob Hoeg Mørk](https://github.com/jakobhoeg).

@@ -47,7 +47,7 @@ const MultiImagePicker: React.FC<MultiImagePickerProps> = ({ onImagesPick, disab
       <input disabled={disabled} {...getInputProps()} />
       <Button disabled={disabled} type="button" variant="ghost" size="icon" className="rounded-full shrink-0">
         <ImageIcon className="w-5 h-5" />
-        {isDragActive && <span className="sr-only">Drop the images here</span>}
+        {isDragActive && <span className="sr-only">Drop images here</span>}
       </Button>
     </div>
   );

@@ -208,7 +208,7 @@ export default function ChatBottombar({
           </div>
           <div className="w-full flex justify-center text-center px-10 md:px-0">
             <p className="text-xs pt-2 text-muted-foreground">
-              The first response might take a little longer to process as the
+              The first reply might take a long because the
               model is being downloaded.
             </p>
           </div>

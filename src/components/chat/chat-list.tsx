@@ -132,7 +132,7 @@ export default function ChatList({
               className="dark:invert"
             />
             <p className="text-center text-2xl md:text-5xl font-semibold text-muted-foreground/75">
-              How can I help you today?
+              how may I assist you?
             </p>
             <p className="text-center text-sm text-muted-foreground/60 max-w-lg">
               Models with <strong>(1k)</strong> suffix lowers VRAM requirements

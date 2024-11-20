@@ -302,7 +302,7 @@ export default function Home() {
         {/* This only shows first time using the app */}
         <DialogContent className="flex flex-col space-y-4">
           <DialogHeader className="space-y-2">
-            <DialogTitle>Welcome to WebChat!</DialogTitle>
+            <DialogTitle>Welcome to OmniBot chat!</DialogTitle>
             <DialogDescription>
               Enter your name to get started. This is just to personalize your
               experience.
