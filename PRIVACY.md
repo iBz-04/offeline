@@ -1,4 +1,4 @@
-# Privacy Policy for Chatty
+# Privacy Policy for OmniBot
 
 ## 1. Introduction
 

@@ -125,14 +125,14 @@ export default function ChatList({
           <div></div>
           <div className="flex flex-col gap-1 items-center">
             <Image
-              src="/logo.svg"
+              src="/chatbot.png"
               alt="AI"
               width={70}
               height={70}
               className="dark:invert"
             />
             <p className="text-center text-2xl md:text-5xl font-semibold text-muted-foreground/75">
-              how may I assist you?
+              How may I assist you?
             </p>
             <p className="text-center text-sm text-muted-foreground/60 max-w-lg">
               Models with <strong>(1k)</strong> suffix lowers VRAM requirements

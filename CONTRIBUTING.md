@@ -4,7 +4,7 @@ First off, a huge thank you for considering contributing to Chatty! We're incred
 
 > Following these guidelines helps to communicate that you respect the time of the developers managing and developing this open source project. In return, we will reciprocate that respect by addressing your issue and assisting you finalize your pull requests.
 
-# Your first contribution
+# first contribution
 
 Following these guidelines ensures a smooth and efficient process for everyone involved. It shows respect for the developers' time and helps us quickly address your valuable contributions. To contribute:
 
@@ -27,8 +27,7 @@ This lets me review your work and discuss any necessary adjustments.
 >
 > First time opening a PR? Check [this](https://makeapullrequest.com/) out.
 
-# Suggest a feature, enhancement or bug
+# Suggest a feature, report bug
 
 You will find the current roadmap in the readme of the repository. If you wish to suggest a feature or enhancement, make sure to open an issue first. We'll then most likely include this in the readme file.
 
-Thank you again for your contribution! 🎉

@@ -159,7 +159,7 @@ export function Sidebar({ isCollapsed, chatId, stop }: SidebarProps) {
         >
           <div className="flex gap-3 items-center ">
             <Image
-              src="/logo.svg"
+              src="/chatbot.png"
               alt="AI"
               width={34}
               height={34}
