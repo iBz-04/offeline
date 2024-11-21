@@ -1,17 +1,10 @@
-<div align="center">
-  
-  [<img src="demo-img.jpg">](https://chattyui.com/)
-  
-</div>
-
 <h1 align="center">
   OmniBot
 </h1>
 
-
 **OMNIBOT** IS a private AI that uses WebGPU to run LLMs natively & privately in your browser, bringing you in-browser AI experience.
 
-# Features 
+# Features
 
 - **In-browser privacy:** All AI models run locally (client side) on your hardware, ensuring that your data is processed only on your pc. No server-side processing!
 - **Offline:** Once the initial download of a model is processed, you'll be able to use it without an active internet connection.
@@ -19,20 +12,17 @@
 - **Supports new open-source models:** Chat with popular open-source models such as Gemma, Llama2 & 3 and Mistral!
 - **Responsive design:** If your phone supports WebGl, you'll be able to use Chatty just as you would on desktop.
 - **Markdown & code highlight:** Messages returned as markdown will be displayed as such & messages that include code, will be highlighted for easy access.
-- **Chat with files:** Load files (pdf & all non-binary files supported - even code files) and ask the models questions about them - fully local! Your documents never gets processed outside of your local environment, thanks to [XenovaTransformerEmbeddings](https://huggingface.co/Xenova/all-MiniLM-L6-v2) & [MemoryVectorStore](https://js.langchain.com/v0.1/docs/integrations/vectorstores/memory/)
+- **Chat with files:** Load files (pdf & all non-binary files supported - even code files) and ask the models questions about them - fully local!
 - **Custom memory support:** Add custom instructions/memory to allow the AI to provide better and more personalized responses.
 - **Export chat messages:** Seamlessly generate and save your chat messages in either json or markdown format.
-- **Voice input support:** Use voice interactions to interact with the models.
+- **Voice message support:** Use voice interactions to interact with the models.
 - **Regenerate responses:** Not quite the response you were hoping for? Quickly regenerate it without having to write out your prompt again.
 - **Light & Dark mode:** Switch between light & dark mode.
 
-# Preview
 
-https://github.com/addyosmani/chatty/assets/114422072/a994cc5c-a99d-4fd2-9eab-c2d4267fcfd3
+# Aim
 
-# Why?
-
-This project is meant to be the closest attempt at bringing the familarity & functionality from popular AI interfaces such as ChatGPT and Gemini into a in-browser experience.
+Omnibot attempts to at bring the functionality from popular AI interfaces such as ChatGPT and Gemini into a in-browser experience.
 
 # Browser support
 
@@ -68,12 +58,7 @@ npm run dev
 > [!BEWARE]  
 > The Dockerfile is not yet optimized for production environment. but if you want to do it, see [Nextjs example](https://github.com/vercel/next.js/blob/canary/examples/with-docker/Dockerfile)
 
-```
-docker build -t chattyui .
-docker run -d -p 3000:3000 chattyui
-```
-
-Or use `docker-compose`:
+use `docker-compose`:
 
 ```
 docker compose up
@@ -94,7 +79,7 @@ docker compose up
 >
 > Smaller models might not be able to process file embeddings as efficient as larger ones.
 
-# Acknowledgements & credits
+# Credit
 
-OmniBot is built using the [WebLLM](https://github.com/mlc-ai/web-llm) project, utilizing [HuggingFace](https://huggingface.co/), open source LLMs and [LangChain](https://www.langchain.com/). We want to acknowledge their great work and thank the open source community.
+OmniBot is built using the [WebLLM](https://github.com/mlc-ai/web-llm) project, utilizing [HuggingFace](https://huggingface.co/), open source LLMs and [LangChain](https://www.langchain.com/).
 
