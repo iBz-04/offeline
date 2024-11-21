@@ -5,20 +5,19 @@
 </div>
 
 <h1 align="center">
-  OmniBot 
+  OmniBot
 </h1>
 
 
-**Chatty** is your private AI that leverages WebGPU to run large language models (LLMs) natively & privately in your browser, bringing you the most feature rich in-browser AI experience.
+**OMNIBOT** IS a private AI that uses WebGPU to run LLMs natively & privately in your browser, bringing you in-browser AI experience.
 
-# Features ✨
+# Features 
 
 - **In-browser privacy:** All AI models run locally (client side) on your hardware, ensuring that your data is processed only on your pc. No server-side processing!
 - **Offline:** Once the initial download of a model is processed, you'll be able to use it without an active internet connection.
 - **Chat history:** Access and manage your conversation history.
 - **Supports new open-source models:** Chat with popular open-source models such as Gemma, Llama2 & 3 and Mistral!
 - **Responsive design:** If your phone supports WebGl, you'll be able to use Chatty just as you would on desktop.
-- **Intuitive UI:** Inspired by popular AI interfaces such as Gemini and ChatGPT to enhance similarity in the user experience.
 - **Markdown & code highlight:** Messages returned as markdown will be displayed as such & messages that include code, will be highlighted for easy access.
 - **Chat with files:** Load files (pdf & all non-binary files supported - even code files) and ask the models questions about them - fully local! Your documents never gets processed outside of your local environment, thanks to [XenovaTransformerEmbeddings](https://huggingface.co/Xenova/all-MiniLM-L6-v2) & [MemoryVectorStore](https://js.langchain.com/v0.1/docs/integrations/vectorstores/memory/)
 - **Custom memory support:** Add custom instructions/memory to allow the AI to provide better and more personalized responses.
@@ -37,49 +36,37 @@ This project is meant to be the closest attempt at bringing the familarity & fun
 
 # Browser support
 
-By default, WebGPU is enabled and supported in both Chrome and Edge. However, it is possible to enable it in Firefox and Firefox Nightly.
-Check the [browser compatibility](https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API#browser_compatibility) for more information.
+WebGPU is enabled and supported in both Chrome & Edge. To enable it in Firefox Check the [browser compatibility](https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API#browser_compatibility) .
 
-# How to Install
-
-> If you just want to try out the app, it's live on [this](https://chattyui.com) website.
->
-> This is a Next.js application and requires Node.js (18+) and npm installed to run the project locally.
 
 ## Install from source
 
-If you want to setup and run the project locally, follow the steps below:
+follow the steps below to run locally:
 
 **1. Clone the repository to a directory on your pc via command prompt:**
 
 ```
-git clone https://github.com/addyosmani/chatty
+git clone https://github.com/iBz-04/omnibot
 ```
 
-**2. Open the folder:**
-
-```
-cd chatty
-```
-
-**3. Install dependencies:**
+**2. Install dependencies:**
 
 ```
 npm install
 ```
 
-**4. Start the development server:**
+**3. Start the development server:**
 
 ```
 npm run dev
 ```
 
-**5. Go to [localhost:3000](http://localhost:3000) and start chatting!**
+**4. Go to [localhost:3000](http://localhost:3000) !**
 
 ## Docker
 
-> [!NOTE]  
-> The Dockerfile has not yet been optimized for a production environment. If you wish to do so yourself, checkout the [Nextjs example](https://github.com/vercel/next.js/blob/canary/examples/with-docker/Dockerfile)
+> [!BEWARE]  
+> The Dockerfile is not yet optimized for production environment. but if you want to do it, see [Nextjs example](https://github.com/vercel/next.js/blob/canary/examples/with-docker/Dockerfile)
 
 ```
 docker build -t chattyui .
@@ -94,14 +81,11 @@ docker compose up
 
 > If you've made changes and want to rebuild, you can simply run `docker-compose up --build`
 
-# Roadmap
+# checklist
 
 - [ ] **Multiple file embeddings:** The ability to embed multiple files instead of one at a time for each session.
-- [ ] **Prompt management system:** Select from and add different system prompts to quickly use in a session.
 
-# Contributing
 
-Contributions are more than welcome! However, please make sure to read the [contributing guidelines](https://github.com/addyosmani/chatty/blob/main/CONTRIBUTING.md) first :)
 
 # Hardware requirements
 
