@@ -10,12 +10,12 @@ import { Suspense } from "react";
 const metainfo = {
   name: "OmniBot",
   title: "OmniBot",
-  description: "Chat with llm models in the browser",
+  description: "Chat with llm models offline and in your browser",
   url: "https://chattyui.com",
   icons: {
-    icon: "/fav-32x32.png",
+    icon: "/chatbot.png",
   },
-  image: "https://chattyui.com/chatbot.png",
+  image: "https://res.cloudinary.com/diekemzs9/image/upload/v1732472018/dark_wljsy8.png",
 };
 
 export const metadata: Metadata = {
