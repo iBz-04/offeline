@@ -11,7 +11,7 @@ const metainfo = {
   name: "OmniBot",
   title: "OmniBot",
   description: "Chat with llm models offline and in your browser",
-  url: "https://chattyui.com",
+  url: "https://www.omnibot.chat/",
   icons: {
     icon: "/chatbot.png",
   },
