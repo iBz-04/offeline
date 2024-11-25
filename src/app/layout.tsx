@@ -70,7 +70,7 @@ export default function RootLayout({
           </ThemeProvider>
         </WebLLMProvider>
       </body>
-      <GoogleAnalytics gaId="G-6X7CQT49KF" />
+      <GoogleAnalytics gaId="G-4186JP0XGB" />
     </html>
   );
 }
