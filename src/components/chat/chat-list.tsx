@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import useChatStore from "@/hooks/useChatStore";
 import ButtonWithTooltip from "../button-with-tooltip";
+import { AnimatedRobotAvatar } from "../ui/animated-robot-avatar";
 
 export default function ChatList({
   messages,
@@ -121,23 +122,130 @@ export default function ChatList({
   if (messages.length === 0) {
     return (
       <div className="w-full h-full flex justify-center items-center p-5 md:p-0">
-        <div className="relative flex flex-col gap-4 items-center justify-center w-full h-full">
-          <div></div>
-          <div className="flex flex-col gap-1 items-center">
-            <Image
-              src="/chatbot.png"
-              alt="AI"
-              width={70}
-              height={70}
-              className="dark:invert"
-            />
-            <p className="text-center text-2xl md:text-5xl font-semibold text-muted-foreground/75">
-              How may I assist you?
-            </p>
-            <p className="text-center text-sm text-muted-foreground/60 max-w-lg">
-              Models with <strong>(1k)</strong> suffix lowers VRAM requirements
-              by ~2-3GB.
-            </p>
+        <div className="relative flex flex-col gap-8 items-center justify-center w-full max-w-2xl mx-auto">
+          {/* Animated gradient background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-background to-fuchsia-500/5 blur-3xl -z-10" />
+          
+          {/* Main content */}
+          <div className="flex flex-col gap-6 items-center text-center">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              className="relative"
+            >
+              <Image
+                src="/chatbot.png"
+                alt="AI"
+                width={100}
+                height={100}
+                className="dark:invert"
+              />
+              <motion.div
+                className="absolute inset-0 rounded-full bg-purple-500/20 blur-xl"
+                animate={{
+                  scale: [1, 1.2, 1],
+                  opacity: [0.3, 0.1, 0.3],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              />
+            </motion.div>
+
+            <div className="space-y-4">
+              <motion.h1
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.1 }}
+                className="text-4xl md:text-6xl font-bold bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent"
+              >
+                How may I assist you?
+              </motion.h1>
+              
+              <motion.p
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="text-base md:text-lg text-muted-foreground/80 max-w-lg mx-auto"
+              >
+                Models with <span className="font-semibold text-purple-500">(1k)</span> suffix lowers VRAM requirements by ~2-3GB.
+              </motion.p>
+            </div>
+
+            {/* Quick start suggestions */}
+            <div className="w-full max-w-[90vw] md:max-w-4xl overflow-hidden mt-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="relative"
+              >
+                {/* First row */}
+                <motion.div
+                  animate={{
+                    x: ["0%", "-50%"],
+                  }}
+                  transition={{
+                    duration: 15,
+                    repeat: Infinity,
+                    ease: "linear",
+                  }}
+                  className="flex gap-2 md:gap-3 mb-2 md:mb-3 w-fit"
+                >
+                  {[
+                    "Tell me about yourself",
+                    "How can you help me with coding?",
+                    "What are your capabilities?",
+                    "Help me write code",
+                    "Write a blog post",
+                    "Debug my code",
+                    "Explain programming concepts",
+                    "Help with algorithms",
+                  ].map((text, i) => (
+                    <div
+                      key={i}
+                      className="shrink-0 text-[10px] md:text-sm text-muted-foreground bg-accent/30 px-2 md:px-4 py-1 md:py-2 rounded-lg border border-accent/50 whitespace-nowrap"
+                    >
+                      {text}
+                    </div>
+                  ))}
+                </motion.div>
+
+                {/* Second row - moves in opposite direction */}
+                <motion.div
+                  animate={{
+                    x: ["-50%", "0%"],
+                  }}
+                  transition={{
+                    duration: 15,
+                    repeat: Infinity,
+                    ease: "linear",
+                  }}
+                  className="flex gap-2 md:gap-3 w-fit"
+                >
+                  {[
+                    "Create a study plan",
+                    "Generate test cases",
+                    "Review my code",
+                    "Explain machine learning",
+                    "Help with research",
+                    "Optimize my code",
+                    "Design patterns",
+                    "Convert to TypeScript",
+                  ].map((text, i) => (
+                    <div
+                      key={i}
+                      className="shrink-0 text-[10px] md:text-sm text-muted-foreground bg-accent/30 px-2 md:px-4 py-1 md:py-2 rounded-lg border border-accent/50 whitespace-nowrap"
+                    >
+                      {text}
+                    </div>
+                  ))}
+                </motion.div>
+              </motion.div>
+            </div>
           </div>
         </div>
       </div>
@@ -213,10 +321,13 @@ export default function ChatList({
               {message.role === "assistant" && (
                 <div className="flex items-end gap-2">
                   <Avatar className="flex justify-center rounded-full bg-card items-center">
-                    <AvatarImage
-                      src="/logo.svg"
-                      alt="AI"
-                      className="w-7 h-7 dark:invert"
+                    <AnimatedRobotAvatar 
+                      className={cn(
+                        "text-foreground",
+                        loadingSubmit && messages.indexOf(message) === messages.length - 1 
+                          ? "animate-pulse" 
+                          : ""
+                      )}
                     />
                   </Avatar>
                   <span className="bg-accent p-3 rounded-r-md rounded-tl-md max-w-xs sm:max-w-xl overflow-x-auto">

@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/providers/theme-provider";
 import { WebLLMProvider } from "@/providers/web-llm-provider";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { Suspense } from "react";
+import { LoadingScreenWrapper } from "@/components/loading-screen-wrapper";
 
 const metainfo = {
   name: "OmniBot",
@@ -13,7 +14,10 @@ const metainfo = {
   description: "Chat with llm models offline and in your browser",
   url: "https://www.omnibot.chat/",
   icons: {
-    icon: "/chatbot.png",
+    icon: [
+      { rel: "icon", url: "/favicon.png" },
+      { rel: "apple-touch-icon", url: "/apple-touch-icon.png" }
+    ],
   },
   image: "https://res.cloudinary.com/diekemzs9/image/upload/v1732472018/dark_wljsy8.png",
 };
@@ -25,6 +29,10 @@ export const metadata: Metadata = {
     template: "%s - " + metainfo.name,
   },
   description: metainfo.description,
+  icons: [
+    { rel: "icon", url: "/favicon.png" },
+    { rel: "apple-touch-icon", url: "/apple-touch-icon.png" }
+  ],
   authors: [
     {
       name: "Ibrahim Rayamah",
@@ -59,16 +67,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={GeistSans.className}>
-        <WebLLMProvider>
-          <ThemeProvider attribute="class" defaultTheme="system">
-            <Suspense>
-              {children}
-            </Suspense>
-            <Toaster position="top-right" />
-          </ThemeProvider>
-        </WebLLMProvider>
+        <LoadingScreenWrapper>
+          <WebLLMProvider>
+            <ThemeProvider attribute="class" defaultTheme="system">
+              <Suspense>
+                {children}
+              </Suspense>
+              <Toaster position="top-right" />
+            </ThemeProvider>
+          </WebLLMProvider>
+        </LoadingScreenWrapper>
       </body>
       <GoogleAnalytics gaId="G-4186JP0XGB" />
     </html>
