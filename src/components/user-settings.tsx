@@ -12,12 +12,14 @@ import { useEffect, useState } from "react";
 import { Skeleton } from "./ui/skeleton";
 import UserSettingsDialog from "./user-settings-dialog";
 import CustomMemoryDialog from "./custom-memory-dialog";
+import InferenceSettingsDialog from "./inference-settings-dialog";
 
 export default function UserSettings() {
   const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [openCustomMemoryDialog, setOpenCustomMemoryDialog] = useState(false);
   const [openUserSettingsDialog, setOpenUserSettingsDialog] = useState(false);
+  const [openInferenceSettingsDialog, setOpenInferenceSettingsDialog] = useState(false);
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -76,6 +78,10 @@ export default function UserSettings() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="p-2">
+        <InferenceSettingsDialog
+          setOpen={setOpenInferenceSettingsDialog}
+          open={openInferenceSettingsDialog}
+        />
         <CustomMemoryDialog
           setOpen={setOpenCustomMemoryDialog}
           open={openCustomMemoryDialog}

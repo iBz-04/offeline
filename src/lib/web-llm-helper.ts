@@ -3,7 +3,7 @@
 import useChatStore from "@/hooks/useChatStore";
 import * as webllm from "@mlc-ai/web-llm";
 import { Model } from "./models";
-import { Document } from "@langchain/core/documents";
+import { Document } from "langchain/document";
 import { XenovaTransformersEmbeddings, getEmbeddingsInstance } from "./embed";
 
 export default class WebLLMHelper {
@@ -51,21 +51,39 @@ export default class WebLLMHelper {
 
     await getEmbeddingsInstance();
 
+    const inferenceSettings = useChatStore.getState().inferenceSettings;
+    
+    // Vision models need larger context window for image embeddings
+    const isVisionModel = selectedModel.name.toLowerCase().includes('vision');
+    const contextWindowSize = isVisionModel ? 8192 : inferenceSettings.contextWindowSize;
+
     const chatOpts = {
-      context_window_size: 6144, // Needs to be specified for long base64 image strings
+      context_window_size: contextWindowSize,
       initProgressCallback: this.initProgressCallback,
       appConfig: this.appConfig,
     };
 
-    const engine: webllm.MLCEngineInterface = await webllm.CreateWebWorkerMLCEngine(
-      new Worker(new URL("./worker.ts", import.meta.url), {
-        type: "module",
-      }),
-      selectedModel.name,
-      chatOpts
-    );
-    this.setEngine(engine);
-    return engine;
+    try {
+      const engine: webllm.MLCEngineInterface = await webllm.CreateWebWorkerMLCEngine(
+        new Worker(new URL("./worker.ts", import.meta.url), {
+          type: "module",
+        }),
+        selectedModel.name,
+        chatOpts
+      );
+      this.setEngine(engine);
+      return engine;
+    } catch (error) {
+      console.error("Failed to initialize model:", error);
+      this.setStoredMessages((message) => [
+        ...message.slice(0, -1),
+        {
+          role: "assistant",
+          content: `Failed to load model: ${error instanceof Error ? error.message : 'Unknown error'}. Please try a different model or check your internet connection.`,
+        },
+      ]);
+      throw error;
+    }
   }
 
   public async reloadEngine(selectedModel: Model) {
@@ -81,6 +99,7 @@ export default class WebLLMHelper {
     isCustomizedInstructionsEnabled: boolean
   ): AsyncGenerator<string> {
     const storedMessages = useChatStore.getState().messages;
+    const inferenceSettings = useChatStore.getState().inferenceSettings;
 
     const completion = await engine.chat.completions.create({
       stream: true,
@@ -96,8 +115,9 @@ export default class WebLLMHelper {
         ...storedMessages,
         { role: "user", content: input },
       ],
-      temperature: 0.6,
-      max_tokens: 6000 // Needed for vision models
+      temperature: inferenceSettings.temperature,
+      top_p: inferenceSettings.topP,
+      max_tokens: inferenceSettings.maxTokens
     });
     for await (const chunk of completion) {
       const delta = chunk.choices[0].delta.content;

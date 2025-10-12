@@ -95,7 +95,10 @@ export default function ChatBottombar({
                 className="w-full items-center flex relative gap-2"
               >
                 <div className="absolute flex left-3 z-10">
-                  <MultiImagePicker disabled={selectedModel.name !== Models[6].name} onImagesPick={setBase64Images} />
+                  <MultiImagePicker 
+                    disabled={!selectedModel.name.includes("vision")} 
+                    onImagesPick={setBase64Images} 
+                  />
                   <FileLoader
                     setFileText={setFileText}
                     files={files}

@@ -2,10 +2,17 @@ import { Model, Models } from "@/lib/models";
 import * as webllm from "@mlc-ai/web-llm";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { Document } from "@langchain/core/documents";
+import { Document } from "langchain/document";
 import { MessageWithFiles } from "@/lib/types";
 
 const LOCAL_SELECTED_MODEL = "selectedModel";
+
+export interface InferenceSettings {
+  contextWindowSize: number;
+  maxTokens: number;
+  temperature: number;
+  topP: number;
+}
 
 interface State {
   selectedModel: Model;
@@ -17,6 +24,7 @@ interface State {
   fileText: Document<Record<string, any>>[] | null;
   files: File[] | undefined;
   base64Images: string[] | null;
+  inferenceSettings: InferenceSettings;
 }
 
 interface Actions {
@@ -38,12 +46,13 @@ interface Actions {
   setFileText: (text: Document<Record<string, any>>[] | null) => void;
   setFiles: (files: File[] | undefined) => void;
   setBase64Images: (base64Images: string[] | null) => void;
+  setInferenceSettings: (settings: InferenceSettings) => void;
 }
 
 const useChatStore = create<State & Actions>()(
   persist(
     (set) => ({
-      selectedModel: Models[5],
+      selectedModel: Models[1], // Qwen2.5 1.5B - Recommended
       setSelectedModel: (model: Model) =>
         set((state: State) => ({
           selectedModel:
@@ -78,13 +87,22 @@ const useChatStore = create<State & Actions>()(
       setFiles: (files) => set({ files }),
 
       base64Images: null,
-      setBase64Images: (base64Images) => set({ base64Images })
+      setBase64Images: (base64Images) => set({ base64Images }),
+
+      inferenceSettings: {
+        contextWindowSize: 4096,
+        maxTokens: 2048,
+        temperature: 0.6,
+        topP: 0.9,
+      },
+      setInferenceSettings: (settings) => set({ inferenceSettings: settings })
     }),
     {
       name: LOCAL_SELECTED_MODEL,
-      // Only save selectedModel to local storage with partialize
+      // Only save selectedModel and inferenceSettings to local storage with partialize
       partialize: (state) => ({
         selectedModel: state.selectedModel,
+        inferenceSettings: state.inferenceSettings,
       }),
     }
   )
