@@ -188,9 +188,8 @@ export default function ChatList({
                   className="flex gap-2 md:gap-3 mb-2 md:mb-3 w-fit"
                 >
                   {[
-                    "Tell me about yourself",
-                    "How can you help me with coding?",
-                    "What are your capabilities?",
+                    "Teach me about finance",
+                    "Can you help me with ideas?",
                     "Help me write code",
                     "Write a blog post",
                     "Debug my code",

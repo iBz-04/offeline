@@ -1,92 +1,83 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { AnimatedRobotAvatar } from "./animated-robot-avatar";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 
 interface LoadingScreenProps {
   isLoading: boolean;
 }
 
 export function LoadingScreen({ isLoading }: LoadingScreenProps) {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    if (isLoading) {
+      setProgress(0);
+      const startTime = Date.now();
+      const duration = 1200; // 1.2 seconds to complete
+      
+      const interval = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const newProgress = Math.min(Math.floor((elapsed / duration) * 100), 100);
+        
+        setProgress(newProgress);
+        
+        if (newProgress >= 100) {
+          clearInterval(interval);
+        }
+      }, 16); // ~60fps for smooth animation
+
+      return () => clearInterval(interval);
+    } else {
+      setProgress(0);
+    }
+  }, [isLoading]);
+
   return (
-    <motion.div
-      initial={{ opacity: 1 }}
-      animate={{ opacity: isLoading ? 1 : 0 }}
-      exit={{ opacity: 0 }}
+    <div
       className={cn(
         "fixed inset-0 z-50 flex items-center justify-center",
-        "bg-gradient-to-br from-background via-background to-purple-500/5",
-        "transition-all duration-300",
-        !isLoading && "pointer-events-none"
+        "bg-background",
+        "transition-opacity duration-300",
+        isLoading ? "opacity-100" : "opacity-0 pointer-events-none"
       )}
     >
-      <div className="flex flex-col items-center gap-6 p-8 rounded-2xl backdrop-blur-sm">
-        <motion.div
-          animate={{
-            scale: [1, 1.1, 1],
-            rotate: [0, 5, -5, 0],
-          }}
-          transition={{
-            duration: 3,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          className="relative"
-        >
-          <AnimatedRobotAvatar className="w-20 h-20" />
-          <motion.div
-            className="absolute inset-0 rounded-full bg-purple-500/20 blur-xl"
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.5, 0.2, 0.5],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
-        </motion.div>
-
-        <div className="space-y-4 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
-              Loading your AI Assistant
-            </h2>
-            <p className="text-sm text-muted-foreground mt-2">
-              Getting everything ready for you...
-            </p>
-          </motion.div>
-
-          <motion.div 
-            className="flex gap-1.5 justify-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-          >
-            {[...Array(3)].map((_, i) => (
-              <motion.div
-                key={i}
-                className="w-2 h-2 rounded-full bg-purple-500"
-                animate={{
-                  y: ["0%", "-50%", "0%"],
-                }}
-                transition={{
-                  duration: 0.8,
-                  repeat: Infinity,
-                  delay: i * 0.2,
-                  ease: "easeInOut",
-                }}
-              />
-            ))}
-          </motion.div>
+      <div className="flex flex-col items-center gap-4">
+        {/* Simple logo */}
+        <Image
+          src="/chatbot.png"
+          alt="AI"
+          width={64}
+          height={64}
+          className="dark:invert"
+        />
+        
+        {/* Loading text - retro style */}
+        <div className="text-2xl font-bold font-mono tracking-wider">
+          LOADING
+        </div>
+        
+        {/* Vintage segmented progress bar */}
+        <div className="flex items-center gap-1 border-2 border-foreground p-1">
+          {Array.from({ length: 10 }).map((_, index) => (
+            <div
+              key={index}
+              className={cn(
+                "w-6 h-8 border border-foreground transition-colors duration-100",
+                index < Math.floor(progress / 10)
+                  ? "bg-foreground"
+                  : "bg-background"
+              )}
+            />
+          ))}
+        </div>
+        
+        {/* Progress percentage */}
+        <div className="text-sm font-mono">
+          {progress}%
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 } 

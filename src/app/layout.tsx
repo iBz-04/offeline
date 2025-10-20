@@ -15,8 +15,8 @@ const metainfo = {
   url: "https://www.omnibot.chat/",
   icons: {
     icon: [
-      { rel: "icon", url: "/favicon.png" },
-      { rel: "apple-touch-icon", url: "/apple-touch-icon.png" }
+      { rel: "icon", url: "/favicon.ico" },
+      { rel: "icon", type: "image/png", url: "/fav-32x32.png" }
     ],
   },
   image: "https://res.cloudinary.com/diekemzs9/image/upload/v1732472018/dark_wljsy8.png",
@@ -30,8 +30,8 @@ export const metadata: Metadata = {
   },
   description: metainfo.description,
   icons: [
-    { rel: "icon", url: "/favicon.png" },
-    { rel: "apple-touch-icon", url: "/apple-touch-icon.png" }
+    { rel: "icon", url: "/favicon.ico" },
+    { rel: "icon", type: "image/png", url: "/fav-32x32.png" }
   ],
   authors: [
     {
