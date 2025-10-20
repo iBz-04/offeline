@@ -185,14 +185,6 @@ export default function ChatList({
               >
                 {/* First row */}
                 <motion.div
-                  animate={{
-                    x: ["0%", "-50%"],
-                  }}
-                  transition={{
-                    duration: 15,
-                    repeat: Infinity,
-                    ease: "linear",
-                  }}
                   className="flex gap-2 md:gap-3 mb-2 md:mb-3 w-fit"
                 >
                   {[
@@ -216,14 +208,6 @@ export default function ChatList({
 
                 {/* Second row - moves in opposite direction */}
                 <motion.div
-                  animate={{
-                    x: ["-50%", "0%"],
-                  }}
-                  transition={{
-                    duration: 15,
-                    repeat: Infinity,
-                    ease: "linear",
-                  }}
                   className="flex gap-2 md:gap-3 w-fit"
                 >
                   {[
