@@ -28,9 +28,6 @@ import useMemoryStore from "@/hooks/useMemoryStore";
 import { Input } from "./ui/input";
 import { MessageWithFiles } from "@/lib/types";
 import { ChatCompletionContentPart, ChatCompletionContentPartText } from "@mlc-ai/web-llm";
-import { Spinner } from "./ui/spinner";
-import { HoverCard } from "./ui/hover-card";
-import { Badge } from "./ui/badge";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -51,7 +48,6 @@ export function Sidebar({ isCollapsed, chatId, stop }: SidebarProps) {
   const [chatTitle, setChatTitle] = useState<string>("");
   const [open, setOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
-  const [loadingState, setLoadingState] = useState(false);
 
   const router = useRouter();
 
@@ -297,33 +293,6 @@ export function Sidebar({ isCollapsed, chatId, stop }: SidebarProps) {
       </div>
 
       <div className="justify-end p-2 border-t">
-        <Link 
-          href="https://www.omniverse.com.im/"
-          target="_blank"
-          rel="noopener noreferrer" 
-          className="block mb-2"
-        >
-          <div className="flex flex-col gap-2 p-4 rounded-xl bg-gradient-to-br from-purple-600 via-fuchsia-500 to-pink-600 text-white hover:opacity-95 transition-all duration-300">
-            <div className="flex justify-between items-center">
-              <span className="text-lg font-semibold">Omniverse</span>
-              <HoverCard text="Its Free!" className="right-0">
-                <Badge count={3} className="bg-white/20 text-white" />
-              </HoverCard>
-            </div>
-            <p className="text-sm opacity-90">
-              Experience multimodal Intelligence
-            </p>
-            <div className="flex justify-between items-center mt-2">
-              <button className="px-4 py-1.5 text-sm font-medium bg-white/10 backdrop-blur-sm border border-white/20 text-white rounded-lg hover:bg-white/20 transition-all duration-200">
-                {loadingState ? (
-                  <Spinner className="w-4 h-4 border-white border-r-transparent" />
-                ) : (
-                  "Try it now"
-                )}
-              </button>
-            </div>
-          </div>
-        </Link>
         <UserSettings />
       </div>
     </div >

@@ -20,6 +20,7 @@ export interface ChatProps {
 export interface MessageWithFile extends ChatCompletionMessageParam {
   chatTitle?: string;
   fileName?: string;
+  loadingProgress?: number; // 0-100 for loading state
 }
 
 export type MergedProps = ChatLayoutProps & ChatProps;

@@ -1,5 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  images: {
+    // Avoid requiring native `sharp` during SSR/dev on Windows
+    unoptimized: true,
+  },
+  experimental: {
+    serverComponentsExternalPackages: ['sharp', '@xenova/transformers'],
+  },
   webpack: (config, { isServer }) => {
     // Fixes npm packages that depend on `fs` module
     if (!isServer) {

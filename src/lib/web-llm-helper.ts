@@ -19,13 +19,29 @@ export default class WebLLMHelper {
 
   // Initialize progress callback
   private initProgressCallback = (report: webllm.InitProgressReport) => {
+    let progress = 0;
+    
+    if (typeof report.progress === 'number') {
+      progress = Math.round(report.progress * 100);
+    } else {
+      // Fallback: parse from text if progress field doesn't exist
+      const progressMatch = report.text.match(/(\d+)%/);
+      if (progressMatch) {
+        progress = parseInt(progressMatch[1], 10);
+      }
+    }
+    
     this.setStoredMessages((message) => [
       ...message.slice(0, -1),
-      { role: "assistant", content: report.text },
+      { 
+        role: "assistant", 
+        content: "Getting ready for you...",
+        loadingProgress: progress
+      },
     ]);
 
-    // Clear the assistant message when the progress is 100% to avoid confusing the model
-    if (report.text.includes("Finish loading")) {
+    
+    if (report.text.includes("Finish loading") || progress >= 100) {
       this.setStoredMessages((message) => [
         ...message.slice(0, -1),
         { role: "assistant", content: "" },
@@ -45,7 +61,8 @@ export default class WebLLMHelper {
       ...message.slice(0, -1),
       {
         role: "assistant",
-        content: "Loading model... This might take a while",
+        content: "Getting ready for you...",
+        loadingProgress: 0,
       },
     ]);
 

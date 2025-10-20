@@ -171,7 +171,7 @@ export default function ChatList({
                 transition={{ delay: 0.2 }}
                 className="text-base md:text-lg text-muted-foreground/80 max-w-lg mx-auto"
               >
-                Models with <span className="font-semibold text-purple-500">(1k)</span> suffix lowers VRAM requirements by ~2-3GB.
+                Chat privately with<span className="font-semibold text-purple-500"> llms</span> in your browser.
               </motion.p>
             </div>
 
@@ -331,8 +331,22 @@ export default function ChatList({
                     />
                   </Avatar>
                   <span className="bg-accent p-3 rounded-r-md rounded-tl-md max-w-xs sm:max-w-xl overflow-x-auto">
+                    {/* Show progress bar if loading */}
+                    {message.loadingProgress !== undefined && (
+                      <div className="flex flex-col gap-2 min-w-[200px]">
+                        <p className="text-sm">{message.content}</p>
+                        <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
+                          <div 
+                            className="bg-primary h-full transition-all duration-300 ease-out rounded-full"
+                            style={{ width: `${message.loadingProgress}%` }}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">{message.loadingProgress}%</p>
+                      </div>
+                    )}
+                    
                     {/* Check if the message content contains a code block */}
-                    {message.content && message.content.toString()
+                    {message.loadingProgress === undefined && message.content && message.content.toString()
                       .split("```")
                       .map((part: string, index: number) => {
                         if (index % 2 === 0) {

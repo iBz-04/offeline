@@ -33,12 +33,10 @@ export const WebLLMProvider: React.FC<{ children: React.ReactNode }> = ({
     if (modelHasChanged) {
       setEngine(null);
     }
-  }, [selectedModel]);
+  }, [selectedModel, modelHasChanged, setEngine]);
 
-  useEffect(() => {
-    useChatStore.persist.rehydrate();
-    useMemoryStore.persist.rehydrate();
-  }, []);
+  // Note: Store rehydration is now handled in LoadingScreenWrapper
+  // to ensure proper timing with the loading screen
 
   return (
     <WebLLMContext.Provider value={webLLMHelper}>
