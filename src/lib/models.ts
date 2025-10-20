@@ -47,4 +47,13 @@ export const Models: Model[] = [
     badgeColor: "blue",
     performance: "quality",
   },
+  
+  // SmolLM2 - Ultra-lightweight on-device models
+  {
+    name: "SmolLM2-360M-Instruct-q4f16_1-MLC",
+    displayName: "Omni Nano",
+    badge: "Ultra Fast",
+    badgeColor: "red",
+    performance: "ultra-fast",
+  },
 ];

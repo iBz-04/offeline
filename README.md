@@ -67,6 +67,7 @@ docker compose up
 > If you've made changes and want to rebuild, you can simply run `docker-compose up --build`
 
 # checklist
+- [ ] **Web search:** The ability to use internet websearch (if user wants)
 
 - [ ] **Multiple file embeddings:** The ability to embed multiple files instead of one at a time for each session.
 
