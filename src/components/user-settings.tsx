@@ -78,17 +78,17 @@ export default function UserSettings() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="p-2">
-        <InferenceSettingsDialog
-          setOpen={setOpenInferenceSettingsDialog}
-          open={openInferenceSettingsDialog}
+        <UserSettingsDialog
+          setOpen={setOpenUserSettingsDialog}
+          open={openUserSettingsDialog}
         />
         <CustomMemoryDialog
           setOpen={setOpenCustomMemoryDialog}
           open={openCustomMemoryDialog}
         />
-        <UserSettingsDialog
-          setOpen={setOpenUserSettingsDialog}
-          open={openUserSettingsDialog}
+        <InferenceSettingsDialog
+          setOpen={setOpenInferenceSettingsDialog}
+          open={openInferenceSettingsDialog}
         />
       </DropdownMenuContent>
     </DropdownMenu>

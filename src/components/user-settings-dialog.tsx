@@ -11,7 +11,7 @@ import {
 
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import EditUsernameForm from "./edit-username-form";
-import { Settings2 } from "lucide-react";
+import { Settings } from "lucide-react";
 import React from "react";
 
 interface UserSettingsDialogProps {
@@ -28,7 +28,7 @@ export default function UserSettingsDialog({
       <DialogTrigger className="w-full">
         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
           <div className="flex w-full gap-2 p-1 items-center cursor-pointer">
-            <Settings2 className="w-4 h-4" />
+            <Settings className="w-4 h-4" />
             Settings
           </div>
         </DropdownMenuItem>

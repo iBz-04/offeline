@@ -10,7 +10,7 @@ import {
 
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import EditCustomMemoryForm from "./edit-custom-memory-form";
-import { BookMarked } from "lucide-react";
+import { Brain } from "lucide-react";
 
 interface CustomMemoryDialogProps {
   open: boolean;
@@ -31,14 +31,14 @@ export default function CustomMemoryDialog({
           }}
         >
           <div className="flex w-full gap-2 p-1 items-center cursor-pointer">
-            <BookMarked className="w-4 h-4" />
-            Customize Memory
+            <Brain className="w-4 h-4" />
+            Memory Config
           </div>
         </DropdownMenuItem>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader className="space-y-4">
-          <DialogTitle className="mb-5">Customize Memory</DialogTitle>
+          <DialogTitle className="mb-5">Memory Config</DialogTitle>
           <EditCustomMemoryForm setOpen={setOpen} />
         </DialogHeader>
       </DialogContent>
