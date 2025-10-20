@@ -14,7 +14,8 @@ import { Sidebar } from "../sidebar";
 import { Message } from "ai/react";
 import useChatStore from "@/hooks/useChatStore";
 import { Models, Model } from "@/lib/models";
-import { Badge } from "../ui/badge";
+import { ModelBadge } from "../ui/model-badge";
+import { InfoIcon } from "lucide-react";
 
 interface ChatTopbarProps {
   chatId?: string;
@@ -52,13 +53,39 @@ export default function ChatTopbar({ chatId, stop }: ChatTopbarProps) {
             <div className="flex gap-2 items-center truncate">
               <p className="truncate">{selectedModel.displayName}</p>
               {selectedModel.badge && (
-                <Badge>{selectedModel.badge}</Badge>
+                <ModelBadge color={selectedModel.badgeColor}>{selectedModel.badge}</ModelBadge>
               )}
             </div>
             <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[200px] md:w-[300px] max-h-96 overflow-y-scroll p-1">
+          {/* Performance Color Legend */}
+          <div className="p-2 mb-2 border-b text-xs text-muted-foreground">
+            <div className="flex items-center gap-1 mb-1">
+              <InfoIcon className="w-3 h-3" />
+              <span className="font-medium">Performance Guide:</span>
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded bg-red-500"></div>
+                <span>Ultra Fast</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded bg-yellow-500"></div>
+                <span>Fast</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded bg-green-500"></div>
+                <span>Balanced</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded bg-blue-500"></div>
+                <span>Quality</span>
+              </div>
+            </div>
+          </div>
+          
           {Models.map((model) => (
             <Button
               key={model.name}
@@ -71,9 +98,9 @@ export default function ChatTopbar({ chatId, stop }: ChatTopbarProps) {
             >
               {model.displayName}
               {model.badge && (
-                <Badge>
+                <ModelBadge color={model.badgeColor}>
                   {model.badge}
-                </Badge>
+                </ModelBadge>
               )}
             </Button>
           ))}

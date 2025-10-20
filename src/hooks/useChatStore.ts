@@ -52,7 +52,7 @@ interface Actions {
 const useChatStore = create<State & Actions>()(
   persist(
     (set) => ({
-      selectedModel: Models[1], // Qwen2.5 1.5B - Recommended
+      selectedModel: Models[1], // Omni O2 - Balanced (Recommended)
       setSelectedModel: (model: Model) =>
         set((state: State) => ({
           selectedModel:
