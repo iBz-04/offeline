@@ -95,10 +95,12 @@ export default function ChatBottombar({
                 className="w-full items-center flex relative gap-2"
               >
                 <div className="absolute flex left-3 z-10">
+                  {/*
                   <MultiImagePicker 
                     disabled={!selectedModel.name.includes("vision")} 
                     onImagesPick={setBase64Images} 
                   />
+                  */}
                   <FileLoader
                     setFileText={setFileText}
                     files={files}
@@ -186,6 +188,7 @@ export default function ChatBottombar({
 
               </form>
             </div>
+            {/*
             {base64Images && (
               <div className="flex px-2 pb-2 gap-2 ">
                 {base64Images.map((image, index) => {
@@ -208,6 +211,7 @@ export default function ChatBottombar({
                 })}
               </div>
             )}
+            */}
           </div>
           <div className="w-full flex justify-center text-center px-10 md:px-0">
             <p className="text-xs pt-2 text-muted-foreground">

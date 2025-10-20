@@ -82,5 +82,5 @@ docker compose up
 
 # Credit
 
-OmniBot is built using the [WebLLM](https://github.com/mlc-ai/web-llm) project, utilizing [HuggingFace](https://huggingface.co/), open source LLMs and [LangChain](https://www.langchain.com/).
+OmniBot is built using [HuggingFace](https://huggingface.co/), open source LLMs and [LangChain](https://www.langchain.com/).
 

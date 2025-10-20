@@ -10,23 +10,17 @@ interface FileEmbedderProps {
 }
 
 const FileEmbedder: React.FC<FileEmbedderProps> = ({ handleEmbed }) => {
-  const excludedExtensions = [
-    ".png", ".webp", ".jpg", ".jpeg", ".avif", ".jxl", ".tiff", ".gif", // Image formats
-    ".mp4", ".mov", ".avi", ".mkv", ".flv", ".wmv", // Video formats
-    ".exe", ".dll", ".so", ".app", ".dmg", // Executables
-    ".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz", // Archives
-    ".mp3", ".wav", ".aac", ".flac", ".ogg", ".m4a", // Audio files
-    ".gltf", ".glb", ".fbx", ".obj", ".3ds", ".blend", // 3D files
-    ".DS_Store", ".git", ".svn", ".hg", // System files
-    ".bin", ".iso", ".img", ".toast", ".vdi" // Disk images
+  // Only allow standard document types
+  const allowedExtensions = [
+    ".pdf", ".md", ".docx", ".txt", ".csv", ".rtf"
   ];
 
   const fileValidator = (file: File) => {
     const extension = file.name.slice(file.name.lastIndexOf('.'));
-    if (excludedExtensions.includes(extension.toLowerCase())) {
+    if (!allowedExtensions.includes(extension.toLowerCase())) {
       return {
         code: "file-invalid-type",
-        message: `Files of type ${extension} are not allowed.`
+        message: `Only PDF, Markdown, DOCX, TXT, CSV, and RTF files are allowed.`
       };
     }
     return null;
@@ -42,6 +36,14 @@ const FileEmbedder: React.FC<FileEmbedderProps> = ({ handleEmbed }) => {
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
     validator: fileValidator,
+    accept: {
+      'application/pdf': ['.pdf'],
+      'text/markdown': ['.md'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'text/plain': ['.txt'],
+      'text/csv': ['.csv'],
+      'application/rtf': ['.rtf'],
+    },
     maxFiles: 1,
     maxSize: 10485760, // 10 MB
   });
