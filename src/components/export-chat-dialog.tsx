@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import ButtonWithTooltip from "./button-with-tooltip";
 import { Button } from "./ui/button";
-import { Download, DownloadIcon } from "lucide-react";
+import { FileDown } from "lucide-react";
 import useMemoryStore from "@/hooks/useMemoryStore";
 import { useEffect, useState } from "react";
 import CodeDisplayBlock from "./code-display-block";
@@ -77,7 +77,7 @@ export default function ExportChatDialog({
             size="icon"
             className="absolute top-5 right-2 sm:right-5 rounded-full"
           >
-            <Download className="w-5 h-5" />
+            <FileDown className="w-5 h-5" />
           </Button>
         </ButtonWithTooltip>
       </DialogTrigger>
@@ -124,7 +124,7 @@ export default function ExportChatDialog({
           }}
           className="w-full flex gap-2 items-center"
         >
-          <DownloadIcon className="w-4 h-4" />
+          <FileDown className="w-4 h-4" />
           Download
         </Button>
       </DialogContent>

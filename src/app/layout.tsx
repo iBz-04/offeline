@@ -8,6 +8,8 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 import { Suspense } from "react";
 import { LoadingScreenWrapper } from "@/components/loading-screen-wrapper";
 
+import { default as fav } from "./favicon.ico";
+
 const metainfo = {
   name: "OmniBot",
   title: "OmniBot",
@@ -15,7 +17,7 @@ const metainfo = {
   url: "https://www.omnibot.chat/",
   icons: {
     icon: [
-      { rel: "icon", url: "/favicon.ico" },
+      { rel: "icon", url: fav.src },
       { rel: "icon", type: "image/png", url: "/fav-32x32.png" }
     ],
   },
