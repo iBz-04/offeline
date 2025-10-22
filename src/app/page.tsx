@@ -144,14 +144,21 @@ export default function Home() {
     );
 
     let assistantMessage = "";
-    // Iterate over the AsyncGenerator completion to get the response
+    let firstChunk = true;
     for await (const chunk of completion) {
       assistantMessage += chunk;
-      setLoadingSubmit(false);
-      setStoredMessages((message) => [
-        ...message.slice(0, -1),
-        { role: "assistant", content: assistantMessage },
-      ]);
+      if (firstChunk) {
+        firstChunk = false;
+        setStoredMessages((message) => [
+          ...message.slice(0, -1),
+          { role: "assistant", content: assistantMessage, isProcessingDocument: false },
+        ]);
+      } else {
+        setStoredMessages((message) => [
+          ...message.slice(0, -1),
+          { role: "assistant", content: assistantMessage },
+        ]);
+      }
     }
 
     setIsLoading(false);
@@ -241,6 +248,11 @@ export default function Home() {
       if (existingFile) {
         const { fileText, fileType, fileName } = JSON.parse(existingFile);
 
+        setStoredMessages((message) => [
+          ...message.slice(0, -1),
+          { role: "assistant", content: "", isProcessingDocument: true },
+        ]);
+
         try {
           const qaPrompt = await webLLMHelper.processDocuments(
             fileText,
@@ -251,10 +263,13 @@ export default function Home() {
           if (!qaPrompt) {
             throw new Error("Failed to process document");
           }
+          setStoredMessages((message) => [
+            ...message.slice(0, -1),
+            { role: "assistant", content: "", isProcessingDocument: false },
+          ]);
           await generateCompletion(loadedEngine, qaPrompt);
         } catch (docError) {
           console.error("Document processing error:", docError);
-          // Fall back to normal completion without document context
           setStoredMessages((message) => [
             ...message.slice(0, -1),
             {
@@ -355,6 +370,11 @@ export default function Home() {
       if (existingFile) {
         const { fileText, fileType, fileName } = JSON.parse(existingFile);
 
+        setStoredMessages((message) => [
+          ...message.slice(0, -1),
+          { role: "assistant", content: "", isProcessingDocument: true },
+        ]);
+
         try {
           const qaPrompt = await webLLMHelper.processDocuments(
             fileText,
@@ -366,10 +386,17 @@ export default function Home() {
             throw new Error("Failed to process document");
           }
 
+          setStoredMessages((message) => [
+            ...message.slice(0, -1),
+            { role: "assistant", content: "", isProcessingDocument: false },
+          ]);
           await generateCompletion(engine, qaPrompt);
         } catch (docError) {
           console.error("Document processing error during regeneration:", docError);
-          // Fall back to normal completion
+          setStoredMessages((message) => [
+            ...message.slice(0, -1),
+            { role: "assistant", content: "" },
+          ]);
           await generateCompletion(engine, lastMsg.toString());
         }
       } else {

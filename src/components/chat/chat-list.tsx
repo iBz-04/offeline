@@ -9,6 +9,7 @@ import remarkGfm from "remark-gfm";
 import { Button } from "../ui/button";
 import { ChatProps } from "@/lib/types";
 import MessageLoading from "../ui/message-loading";
+import DocumentReview from "../ui/document-review";
 import {
   CheckIcon,
   CopyIcon,
@@ -436,10 +437,10 @@ export default function ChatList({
                         )}
                     </div>
 
-                    {/* Loading dots */}
+                    {/* Loading indicator */}
                     {loadingSubmit &&
                       messages.indexOf(message) === messages.length - 1 && (
-                        <MessageLoading />
+                        message.isProcessingDocument ? <DocumentReview /> : <MessageLoading />
                       )}
                   </span>
                 </div>

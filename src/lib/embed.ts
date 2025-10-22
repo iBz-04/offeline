@@ -25,7 +25,6 @@ export class XenovaTransformersEmbeddings
 
   async _embed(texts: string[]): Promise<number[][]> {
     if (!this.client) {
-      // Use 'feature-extraction' pipeline instead of 'embeddings'
       this.client = await pipeline("feature-extraction", this.model);
     }
 
