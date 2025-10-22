@@ -308,14 +308,7 @@ export default function ChatList({
               {message.role === "assistant" && (
                 <div className="flex items-end gap-2">
                   <Avatar className="flex justify-center rounded-full bg-card items-center">
-                    <AnimatedRobotAvatar 
-                      className={cn(
-                        "text-foreground",
-                        loadingSubmit && messages.indexOf(message) === messages.length - 1 
-                          ? "animate-pulse" 
-                          : ""
-                      )}
-                    />
+                    <AnimatedRobotAvatar className="text-foreground" />
                   </Avatar>
                   <span className="bg-accent p-3 rounded-r-md rounded-tl-md max-w-xs sm:max-w-xl overflow-x-auto">
                     {/* Show progress bar if loading */}

@@ -145,21 +145,38 @@ export default function Home() {
 
     let assistantMessage = "";
     let firstChunk = true;
-    for await (const chunk of completion) {
-      assistantMessage += chunk;
-      if (firstChunk) {
-        firstChunk = false;
-        setStoredMessages((message) => [
-          ...message.slice(0, -1),
-          { role: "assistant", content: assistantMessage, isProcessingDocument: false },
-        ]);
-      } else {
+    let pendingUpdate = "";
+    let updateTimeout: NodeJS.Timeout | null = null;
+
+    const flushUpdate = () => {
+      if (pendingUpdate) {
+        assistantMessage += pendingUpdate;
         setStoredMessages((message) => [
           ...message.slice(0, -1),
           { role: "assistant", content: assistantMessage },
         ]);
+        pendingUpdate = "";
       }
+    };
+
+    for await (const chunk of completion) {
+      pendingUpdate += chunk;
+
+      if (firstChunk) {
+        firstChunk = false;
+        flushUpdate();
+        setStoredMessages((message) => [
+          ...message.slice(0, -1),
+          { role: "assistant", content: assistantMessage, isProcessingDocument: false },
+        ]);
+      }
+
+      if (updateTimeout) clearTimeout(updateTimeout);
+      updateTimeout = setTimeout(flushUpdate, 50);
     }
+
+    flushUpdate();
+    if (updateTimeout) clearTimeout(updateTimeout);
 
     setIsLoading(false);
     setLoadingSubmit(false);
