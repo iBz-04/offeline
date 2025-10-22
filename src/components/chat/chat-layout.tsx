@@ -27,6 +27,9 @@ export default function ChatLayout({
   loadingSubmit,
   handleSubmit,
   onRegenerate,
+  onRetry,
+  loadingError,
+  isModelLoading,
 }: MergedProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const setStoredMessages = useChatStore((state) => state.setMessages);
@@ -132,6 +135,9 @@ export default function ChatLayout({
           chatId={chatId}
           loadingSubmit={loadingSubmit}
           onRegenerate={onRegenerate}
+          onRetry={onRetry}
+          loadingError={loadingError}
+          isModelLoading={isModelLoading}
         />
 
         {/* Export chat button */}

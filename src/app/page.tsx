@@ -29,6 +29,10 @@ export default function Home() {
   const setInput = useChatStore((state) => state.setInput);
   const setIsLoading = useChatStore((state) => state.setIsLoading);
   const isLoading = useChatStore((state) => state.isLoading);
+  const isModelLoading = useChatStore((state) => state.isModelLoading);
+  const setIsModelLoading = useChatStore((state) => state.setIsModelLoading);
+  const loadingError = useChatStore((state) => state.loadingError);
+  const setLoadingError = useChatStore((state) => state.setLoadingError);
   const storedMessages = useChatStore((state) => state.messages);
   const setStoredMessages = useChatStore((state) => state.setMessages);
   const modelHasChanged = useChatStore((state) => state.modelHasChanged);
@@ -38,6 +42,7 @@ export default function Home() {
   const files = useChatStore((state) => state.files);
   const setFileText = useChatStore((state) => state.setFileText);
   const setFiles = useChatStore((state) => state.setFiles);
+  const resetState = useChatStore((state) => state.resetState);
   const customizedInstructions = useMemoryStore(
     (state) => state.customizedInstructions
   );
@@ -97,6 +102,36 @@ export default function Home() {
     }
   }, []);
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      // Cancel any ongoing operations when component unmounts
+      webLLMHelper.cancelLoading();
+      webLLMHelper.cancelGeneration();
+    };
+  }, [webLLMHelper]);
+
+  // Handle online/offline events
+  useEffect(() => {
+    const handleOnline = () => {
+      console.log("Connection restored");
+      setLoadingError(null);
+    };
+
+    const handleOffline = () => {
+      console.log("Connection lost");
+      setLoadingError("No internet connection. Model loading may fail.");
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [setLoadingError]);
+
   const generateCompletion = async (
     loadedEngine: webllm.MLCEngineInterface,
     prompt: string
@@ -124,12 +159,20 @@ export default function Home() {
   };
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    if (isLoading) return;
+    // Prevent submission if already loading or processing
+    if (isLoading || isModelLoading) {
+      console.log("Already processing, ignoring submit");
+      return;
+    }
 
     let loadedEngine = engine;
 
     e.preventDefault();
     setIsLoading(true);
+    setLoadingError(null);
+
+    // Store the current input for potential retry
+    const currentInput = input;
 
     let userMessage: MessageWithFiles;
 
@@ -139,7 +182,7 @@ export default function Home() {
         fileName: files ? files[0].name : undefined,
         role: "user",
         content: [
-          { type: 'text', text: input },
+          { type: 'text', text: currentInput },
           ...base64Images.map((image) => ({
             type: 'image_url' as const,
             image_url: { url: image }
@@ -150,7 +193,7 @@ export default function Home() {
       userMessage = {
         fileName: files ? files[0].name : undefined,
         role: "user",
-        content: input
+        content: currentInput
       };
     }
 
@@ -167,19 +210,24 @@ export default function Home() {
     setInput("");
 
     if (!loadedEngine) {
-      // Load engine
+      // Load engine with retry support
+      setIsModelLoading(true);
       try {
         loadedEngine = await webLLMHelper.initialize(selectedModel);
+        setIsModelLoading(false);
       } catch (e) {
         setIsLoading(false);
+        setIsModelLoading(false);
+        
+        const errorMessage = e instanceof Error ? e.message : String(e);
+        setLoadingError(errorMessage);
 
-        setStoredMessages((message) => [
-          ...message.slice(0, -1),
-          {
-            role: "assistant",
-            content: "Failed to load model. " + e,
-          },
-        ]);
+        // Don't show error message in chat if it was canceled
+        if (!errorMessage.includes("CANCELED")) {
+          setStoredMessages((message) => [
+            ...message.slice(0, -1),
+          ]);
+        }
         return;
       }
     }
@@ -193,43 +241,89 @@ export default function Home() {
       if (existingFile) {
         const { fileText, fileType, fileName } = JSON.parse(existingFile);
 
-        const qaPrompt = await webLLMHelper.processDocuments(
-          fileText,
-          fileType,
-          fileName,
-          input
-        );
-        if (!qaPrompt) {
-          return;
+        try {
+          const qaPrompt = await webLLMHelper.processDocuments(
+            fileText,
+            fileType,
+            fileName,
+            currentInput
+          );
+          if (!qaPrompt) {
+            throw new Error("Failed to process document");
+          }
+          await generateCompletion(loadedEngine, qaPrompt);
+        } catch (docError) {
+          console.error("Document processing error:", docError);
+          // Fall back to normal completion without document context
+          setStoredMessages((message) => [
+            ...message.slice(0, -1),
+            {
+              role: "assistant",
+              content: `⚠️ Failed to process document: ${docError instanceof Error ? docError.message : 'Unknown error'}. Answering without document context.`,
+            },
+            { role: "assistant", content: "" },
+          ]);
+          await generateCompletion(loadedEngine, currentInput);
         }
-        await generateCompletion(loadedEngine, qaPrompt);
       } else {
-        await generateCompletion(loadedEngine, input);
+        await generateCompletion(loadedEngine, currentInput);
       }
     } catch (e) {
       setIsLoading(false);
       setLoadingSubmit(false);
+      
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      setLoadingError(errorMessage);
+      
       setStoredMessages((message) => [
         ...message.slice(0, -1),
         {
           role: "assistant",
-          content: "Failed to load model. " + e,
+          content: `❌ Failed to generate response: ${errorMessage}`,
         },
       ]);
     }
   };
 
   const onStop = () => {
-    if (!engine) {
-      return;
+    console.log("Stop requested");
+    
+    // Cancel model loading if in progress
+    if (isModelLoading) {
+      webLLMHelper.cancelLoading();
+      setIsModelLoading(false);
     }
+    
+    // Cancel generation if in progress
+    if (engine && webLLMHelper.isGenerating()) {
+      webLLMHelper.cancelGeneration();
+      engine.interruptGenerate();
+    }
+    
     setIsLoading(false);
     setLoadingSubmit(false);
-    engine.interruptGenerate();
+    
+    // Add canceled message if there's an empty assistant message
+    if (storedMessages.length > 0 && storedMessages[storedMessages.length - 1].content === "") {
+      setStoredMessages((message) => [
+        ...message.slice(0, -1),
+        {
+          role: "assistant",
+          content: "⏹️ Stopped.",
+        },
+      ]);
+    }
   };
 
   const onRegenerate = async () => {
     if (!engine) {
+      console.log("No engine available for regeneration");
+      return;
+    }
+
+    // Prevent regeneration if already loading
+    if (isLoading || isModelLoading) {
+      console.log("Already processing, ignoring regenerate");
       return;
     }
 
@@ -237,16 +331,18 @@ export default function Home() {
     const lastMsg = storedMessages[storedMessages.length - 2]?.content;
 
     if (!lastMsg) {
+      console.log("No user message to regenerate from");
       return;
     }
 
     setIsLoading(true);
     setLoadingSubmit(true);
+    setLoadingError(null);
 
-    // Set the input to the last user message
+    // Set the input to the last user message (for display purposes)
     setInput(lastMsg.toString());
 
-    // Remove the last assistant message
+    // Remove the last assistant message and add empty one
     setStoredMessages((message) => [
       ...message.slice(0, -1),
       { role: "assistant", content: "" },
@@ -254,27 +350,72 @@ export default function Home() {
 
     setInput("");
 
-    const existingFile = localStorage.getItem(`chatFile_${chatId}`);
-    if (existingFile) {
-      const { fileText, fileType, fileName } = JSON.parse(existingFile);
+    try {
+      const existingFile = localStorage.getItem(`chatFile_${chatId}`);
+      if (existingFile) {
+        const { fileText, fileType, fileName } = JSON.parse(existingFile);
 
-      const qaPrompt = await webLLMHelper.processDocuments(
-        fileText,
-        fileType,
-        fileName,
-        lastMsg.toString()
-      );
-      if (!qaPrompt) {
-        return;
+        try {
+          const qaPrompt = await webLLMHelper.processDocuments(
+            fileText,
+            fileType,
+            fileName,
+            lastMsg.toString()
+          );
+          if (!qaPrompt) {
+            throw new Error("Failed to process document");
+          }
+
+          await generateCompletion(engine, qaPrompt);
+        } catch (docError) {
+          console.error("Document processing error during regeneration:", docError);
+          // Fall back to normal completion
+          await generateCompletion(engine, lastMsg.toString());
+        }
+      } else {
+        await generateCompletion(engine, lastMsg.toString());
       }
+    } catch (e) {
+      console.error("Regeneration error:", e);
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      setLoadingError(errorMessage);
+      
+      setStoredMessages((message) => [
+        ...message.slice(0, -1),
+        {
+          role: "assistant",
+          content: `❌ Failed to regenerate: ${errorMessage}`,
+        },
+      ]);
+    } finally {
+      setIsLoading(false);
+      setLoadingSubmit(false);
+    }
+  };
 
-      await generateCompletion(engine, qaPrompt);
-    } else {
-      await generateCompletion(engine, lastMsg.toString());
+  // Retry last failed operation
+  const onRetry = async () => {
+    if (!loadingError) {
+      return;
     }
 
-    setIsLoading(false);
-    setLoadingSubmit(false);
+    // Check if there's a user message to retry
+    if (storedMessages.length < 2) {
+      return;
+    }
+
+    const lastUserMsg = storedMessages[storedMessages.length - 2];
+    if (lastUserMsg.role !== "user") {
+      return;
+    }
+
+    // Clear error and retry
+    setLoadingError(null);
+    
+    // Remove the error message and regenerate
+    setStoredMessages((message) => message.slice(0, -1));
+    
+    await onRegenerate();
   };
 
   const onOpenChange = (isOpen: boolean) => {
@@ -297,6 +438,9 @@ export default function Home() {
           chatId={chatId}
           loadingSubmit={loadingSubmit}
           onRegenerate={onRegenerate}
+          onRetry={onRetry}
+          loadingError={loadingError}
+          isModelLoading={isModelLoading}
         />
 
         {/* This only shows first time using the app */}

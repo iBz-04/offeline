@@ -70,6 +70,21 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // Configure Transformers.js to use Hugging Face CDN
+              if (typeof window !== 'undefined') {
+                window.transformersConfig = {
+                  allowLocalModels: false,
+                  allowRemoteModels: true,
+                };
+              }
+            `,
+          }}
+        />
+      </head>
       <body className={GeistSans.className}>
         <LoadingScreenWrapper>
           <WebLLMProvider>

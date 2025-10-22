@@ -19,6 +19,8 @@ interface State {
   input: string;
   modelHasChanged: boolean;
   isLoading: boolean;
+  isModelLoading: boolean;
+  loadingError: string | null;
   messages: MessageWithFiles[];
   engine: webllm.MLCEngineInterface | null;
   fileText: Document<Record<string, any>>[] | null;
@@ -37,6 +39,8 @@ interface Actions {
   setInput: (input: string) => void;
   setModelHasChanged: (changed: boolean) => void;
   setIsLoading: (loading: boolean) => void;
+  setIsModelLoading: (loading: boolean) => void;
+  setLoadingError: (error: string | null) => void;
   setMessages: (
     fn: (
       messages: MessageWithFiles[]
@@ -47,6 +51,7 @@ interface Actions {
   setFiles: (files: File[] | undefined) => void;
   setBase64Images: (base64Images: string[] | null) => void;
   setInferenceSettings: (settings: InferenceSettings) => void;
+  resetState: () => void;
 }
 
 const useChatStore = create<State & Actions>()(
@@ -74,6 +79,12 @@ const useChatStore = create<State & Actions>()(
       isLoading: false,
       setIsLoading: (loading) => set({ isLoading: loading }),
 
+      isModelLoading: false,
+      setIsModelLoading: (loading) => set({ isModelLoading: loading }),
+
+      loadingError: null,
+      setLoadingError: (error) => set({ loadingError: error }),
+
       messages: [],
       setMessages: (fn) => set((state) => ({ messages: fn(state.messages) })),
 
@@ -95,7 +106,17 @@ const useChatStore = create<State & Actions>()(
         temperature: 0.6,
         topP: 0.9,
       },
-      setInferenceSettings: (settings) => set({ inferenceSettings: settings })
+      setInferenceSettings: (settings) => set({ inferenceSettings: settings }),
+
+      resetState: () => set({
+        isLoading: false,
+        isModelLoading: false,
+        loadingError: null,
+        input: "",
+        fileText: null,
+        files: undefined,
+        base64Images: null,
+      }),
     }),
     {
       name: LOCAL_SELECTED_MODEL,

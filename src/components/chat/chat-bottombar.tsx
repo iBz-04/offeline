@@ -32,6 +32,8 @@ export default function ChatBottombar({
   stop,
   files,
   setFiles,
+  loadingError,
+  isModelLoading,
 }: MergedProps) {
   const input = useChatStore((state) => state.input);
   const handleInputChange = useChatStore((state) => state.handleInputChange);
@@ -214,10 +216,20 @@ export default function ChatBottombar({
             */}
           </div>
           <div className="w-full flex justify-center text-center px-10 md:px-0">
-            <p className="text-xs pt-2 text-muted-foreground">
-              The first reply might take a long because the
-              model is being downloaded.
-            </p>
+            {isModelLoading ? (
+              <p className="text-xs pt-2 text-blue-500 animate-pulse">
+                Loading model... This may take a moment on first use.
+              </p>
+            ) : loadingError ? (
+              <p className="text-xs pt-2 text-red-500">
+                {loadingError}
+              </p>
+            ) : (
+              <p className="text-xs pt-2 text-muted-foreground">
+                The first reply might take a long because the
+                model is being downloaded.
+              </p>
+            )}
           </div>
         </div>
       </AnimatePresence>

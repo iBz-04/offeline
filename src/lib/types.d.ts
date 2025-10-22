@@ -15,6 +15,9 @@ export interface ChatProps {
   stop: () => void;
   isMobile?: boolean;
   onRegenerate?: () => void;
+  onRetry?: () => void;
+  loadingError?: string | null;
+  isModelLoading?: boolean;
 }
 
 export interface MessageWithFile extends ChatCompletionMessageParam {

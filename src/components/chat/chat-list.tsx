@@ -25,6 +25,9 @@ export default function ChatList({
   messages,
   loadingSubmit,
   onRegenerate,
+  onRetry,
+  loadingError,
+  isModelLoading,
 }: ChatProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const [name, setName] = React.useState<string>("");
@@ -373,6 +376,7 @@ export default function ChatList({
 
                       {/* Only show regenerate button on the last ai message */}
                       {!isLoading &&
+                        !loadingError &&
                         messages.indexOf(message) === messages.length - 1 && (
                           <ButtonWithTooltip
                             side="bottom"
@@ -383,6 +387,24 @@ export default function ChatList({
                               size="icon"
                               className="h-4 w-4"
                               onClick={onRegenerate}
+                            >
+                              <RefreshCcw className="w-3.5 h-3.5 scale-100 transition-all" />
+                            </Button>
+                          </ButtonWithTooltip>
+                        )}
+
+                      {/* Show retry button if there's an error */}
+                      {loadingError &&
+                        messages.indexOf(message) === messages.length - 1 && (
+                          <ButtonWithTooltip
+                            side="bottom"
+                            toolTipText="Retry"
+                          >
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-4 w-4 text-orange-500 hover:text-orange-600"
+                              onClick={onRetry}
                             >
                               <RefreshCcw className="w-3.5 h-3.5 scale-100 transition-all" />
                             </Button>

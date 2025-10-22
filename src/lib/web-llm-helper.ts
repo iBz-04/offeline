@@ -6,19 +6,64 @@ import { Model } from "./models";
 import { Document } from "langchain/document";
 import { XenovaTransformersEmbeddings, getEmbeddingsInstance } from "./embed";
 
+// Error types for better error handling
+export enum ModelLoadError {
+  NO_GPU = "NO_GPU",
+  NETWORK_ERROR = "NETWORK_ERROR",
+  INITIALIZATION_ERROR = "INITIALIZATION_ERROR",
+  CACHE_ERROR = "CACHE_ERROR",
+  CANCELED = "CANCELED",
+  UNKNOWN = "UNKNOWN",
+}
+
+interface ModelLoadState {
+  isLoading: boolean;
+  isRetrying: boolean;
+  retryCount: number;
+  modelName: string | null;
+}
+
 export default class WebLLMHelper {
   engine: webllm.MLCEngineInterface | null;
   setStoredMessages = useChatStore((state) => state.setMessages);
   setEngine = useChatStore((state) => state.setEngine);
   appConfig = webllm.prebuiltAppConfig;
+  
+  // State management for reliable operations
+  private loadState: ModelLoadState = {
+    isLoading: false,
+    isRetrying: false,
+    retryCount: 0,
+    modelName: null,
+  };
+  
+  private abortController: AbortController | null = null;
+  private generationAbortController: AbortController | null = null;
+  private readonly MAX_RETRIES = 3;
+  private readonly RETRY_DELAY_MS = 2000;
 
   public constructor(engine: webllm.MLCEngineInterface | null) {
     this.appConfig.useIndexedDBCache = true;
     this.engine = engine;
   }
 
-  // Initialize progress callback
+  // Check if device is online
+  private isOnline(): boolean {
+    return typeof navigator !== 'undefined' && navigator.onLine;
+  }
+
+  // Check if GPU is available
+  private hasGPU(): boolean {
+    return typeof navigator !== 'undefined' && "gpu" in navigator;
+  }
+
+  // Initialize progress callback with cancellation support
   private initProgressCallback = (report: webllm.InitProgressReport) => {
+    // Check if loading was canceled
+    if (this.abortController?.signal.aborted) {
+      return;
+    }
+
     let progress = 0;
     
     if (typeof report.progress === 'number') {
@@ -31,16 +76,19 @@ export default class WebLLMHelper {
       }
     }
     
+    const retryInfo = this.loadState.isRetrying 
+      ? ` (Retry ${this.loadState.retryCount}/${this.MAX_RETRIES})` 
+      : '';
+    
     this.setStoredMessages((message) => [
       ...message.slice(0, -1),
       { 
         role: "assistant", 
-        content: "Getting ready for you...",
+        content: `Getting ready for you...${retryInfo}`,
         loadingProgress: progress
       },
     ]);
 
-    
     if (report.text.includes("Finish loading") || progress >= 100) {
       this.setStoredMessages((message) => [
         ...message.slice(0, -1),
@@ -49,24 +97,35 @@ export default class WebLLMHelper {
     }
   };
 
-  // Initialize the engine
-  public async initialize(
-    selectedModel: Model
-  ): Promise<webllm.MLCEngineInterface> {
-    if (!("gpu" in navigator)) {
-      return Promise.reject("This device does not support GPU acceleration.");
+  // Cancel current loading operation
+  public cancelLoading(): void {
+    if (this.abortController) {
+      this.abortController.abort();
+      this.loadState.isLoading = false;
+      this.loadState.isRetrying = false;
+      
+      this.setStoredMessages((message) => [
+        ...message.slice(0, -1),
+        {
+          role: "assistant",
+          content: "Model loading canceled.",
+        },
+      ]);
     }
+  }
 
-    this.setStoredMessages((message) => [
-      ...message.slice(0, -1),
-      {
-        role: "assistant",
-        content: "Getting ready for you...",
-        loadingProgress: 0,
-      },
-    ]);
-
-    await getEmbeddingsInstance();
+  // Internal method to attempt model initialization
+  private async attemptInitialize(
+    selectedModel: Model,
+    retryCount: number = 0
+  ): Promise<webllm.MLCEngineInterface> {
+    // Create new abort controller for this attempt
+    this.abortController = new AbortController();
+    
+    // Check if already canceled
+    if (this.abortController.signal.aborted) {
+      throw new Error(ModelLoadError.CANCELED);
+    }
 
     const inferenceSettings = useChatStore.getState().inferenceSettings;
     
@@ -80,67 +139,279 @@ export default class WebLLMHelper {
       appConfig: this.appConfig,
     };
 
-    try {
-      const engine: webllm.MLCEngineInterface = await webllm.CreateWebWorkerMLCEngine(
-        new Worker(new URL("./worker.ts", import.meta.url), {
-          type: "module",
-        }),
-        selectedModel.name,
-        chatOpts
-      );
-      this.setEngine(engine);
-      return engine;
-    } catch (error) {
-      console.error("Failed to initialize model:", error);
+    const engine: webllm.MLCEngineInterface = await webllm.CreateWebWorkerMLCEngine(
+      new Worker(new URL("./worker.ts", import.meta.url), {
+        type: "module",
+      }),
+      selectedModel.name,
+      chatOpts
+    );
+
+    // Check if canceled after loading
+    if (this.abortController?.signal.aborted) {
+      // Clean up the engine if loading was canceled
+      await engine.unload();
+      throw new Error(ModelLoadError.CANCELED);
+    }
+
+    return engine;
+  }
+
+  // Initialize the engine with retry logic and cancellation support
+  public async initialize(
+    selectedModel: Model
+  ): Promise<webllm.MLCEngineInterface> {
+    // Prevent multiple simultaneous loads
+    if (this.loadState.isLoading) {
+      throw new Error("Model is already being loaded. Please wait or cancel the current operation.");
+    }
+
+    // Reset state
+    this.loadState = {
+      isLoading: true,
+      isRetrying: false,
+      retryCount: 0,
+      modelName: selectedModel.name,
+    };
+
+    // Check GPU support
+    if (!this.hasGPU()) {
+      this.loadState.isLoading = false;
+      const error = new Error("This device does not support GPU acceleration.");
+      error.name = ModelLoadError.NO_GPU;
+      
       this.setStoredMessages((message) => [
         ...message.slice(0, -1),
         {
           role: "assistant",
-          content: `Failed to load model: ${error instanceof Error ? error.message : 'Unknown error'}. Please try a different model or check your internet connection.`,
+          content: "⚠️ This device does not support GPU acceleration. WebLLM requires a GPU to run models.",
         },
       ]);
+      
       throw error;
     }
+
+    // Show initial loading message
+    this.setStoredMessages((message) => [
+      ...message.slice(0, -1),
+      {
+        role: "assistant",
+        content: "Getting ready for you...",
+        loadingProgress: 0,
+      },
+    ]);
+
+    // Initialize embeddings (non-blocking - in background)
+    // Don't wait for embeddings to complete - they can load in parallel
+    getEmbeddingsInstance().catch(error => {
+      console.warn("Failed to initialize embeddings (non-critical):", error);
+      // Embeddings failure is non-critical - main LLM can still work
+    });
+
+    // Try to load the model with retries
+    let lastError: Error | null = null;
+    
+    for (let attempt = 0; attempt <= this.MAX_RETRIES; attempt++) {
+      try {
+        this.loadState.retryCount = attempt;
+        this.loadState.isRetrying = attempt > 0;
+        
+        const engine = await this.attemptInitialize(selectedModel, attempt);
+        
+        // Success! Clean up and return
+        this.loadState.isLoading = false;
+        this.loadState.isRetrying = false;
+        this.abortController = null;
+        this.setEngine(engine);
+        
+        return engine;
+        
+      } catch (error) {
+        lastError = error as Error;
+        
+        // Check if canceled
+        if (this.abortController?.signal.aborted || lastError.message === ModelLoadError.CANCELED) {
+          this.loadState.isLoading = false;
+          this.loadState.isRetrying = false;
+          throw new Error(ModelLoadError.CANCELED);
+        }
+        
+        // Don't retry on last attempt
+        if (attempt === this.MAX_RETRIES) {
+          break;
+        }
+        
+        // Show retry message
+        const isOffline = !this.isOnline();
+        const retryMessage = isOffline
+          ? `⚠️ You appear to be offline. Retrying in ${this.RETRY_DELAY_MS / 1000}s... (${attempt + 1}/${this.MAX_RETRIES})`
+          : `⚠️ Loading failed. Retrying in ${this.RETRY_DELAY_MS / 1000}s... (${attempt + 1}/${this.MAX_RETRIES})`;
+        
+        this.setStoredMessages((message) => [
+          ...message.slice(0, -1),
+          {
+            role: "assistant",
+            content: retryMessage,
+            loadingProgress: 0,
+          },
+        ]);
+        
+        // Wait before retrying (with exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY_MS * (attempt + 1)));
+      }
+    }
+
+    // All retries failed
+    this.loadState.isLoading = false;
+    this.loadState.isRetrying = false;
+    this.abortController = null;
+    
+    const errorMessage = this.formatErrorMessage(lastError);
+    
+    this.setStoredMessages((message) => [
+      ...message.slice(0, -1),
+      {
+        role: "assistant",
+        content: errorMessage,
+      },
+    ]);
+    
+    throw lastError || new Error("Failed to initialize model after multiple attempts");
+  }
+
+  // Format error messages for better UX
+  private formatErrorMessage(error: Error | null): string {
+    if (!error) {
+      return "❌ Failed to load model. Please try again.";
+    }
+
+    const isOffline = !this.isOnline();
+    
+    if (isOffline) {
+      return "❌ Failed to load model: No internet connection detected. Please check your connection and try again. If the model was previously cached, it should work offline.";
+    }
+
+    if (error.message.includes("fetch") || error.message.includes("network")) {
+      return "❌ Failed to load model: Network error. Please check your internet connection and try again.";
+    }
+
+    if (error.message.includes("cache") || error.message.includes("IndexedDB")) {
+      return "❌ Failed to load model: Cache error. Try clearing your browser cache or using incognito mode.";
+    }
+
+    return `❌ Failed to load model: ${error.message}. Please try a different model or refresh the page.`;
+  }
+
+  // Check if a model is currently loading
+  public isLoading(): boolean {
+    return this.loadState.isLoading;
+  }
+
+  // Get current load state
+  public getLoadState(): ModelLoadState {
+    return { ...this.loadState };
   }
 
   public async reloadEngine(selectedModel: Model) {
     console.log('reloading')
-    this.engine?.reload(selectedModel.name);
+    
+    // Cancel any ongoing operations
+    this.cancelLoading();
+    this.cancelGeneration();
+    
+    try {
+      await this.engine?.reload(selectedModel.name);
+    } catch (error) {
+      console.error("Failed to reload model:", error);
+      // Reset engine on reload failure
+      this.setEngine(null);
+      throw error;
+    }
   }
 
-  // Generate streaming completion
+  // Safely unload the engine
+  public async unload(): Promise<void> {
+    if (this.engine) {
+      try {
+        await this.engine.unload();
+      } catch (error) {
+        console.error("Error unloading engine:", error);
+      }
+      this.setEngine(null);
+    }
+    
+    this.loadState = {
+      isLoading: false,
+      isRetrying: false,
+      retryCount: 0,
+      modelName: null,
+    };
+  }
+
+  // Cancel ongoing generation
+  public cancelGeneration(): void {
+    if (this.generationAbortController) {
+      this.generationAbortController.abort();
+      this.generationAbortController = null;
+    }
+  }
+
+  // Check if generation is in progress
+  public isGenerating(): boolean {
+    return this.generationAbortController !== null;
+  }
+
+  // Generate streaming completion with cancellation support
   public async *generateCompletion(
     engine: webllm.MLCEngineInterface,
     input: string,
     customizedInstructions: string,
     isCustomizedInstructionsEnabled: boolean
   ): AsyncGenerator<string> {
+    // Create new abort controller for this generation
+    this.generationAbortController = new AbortController();
+    
     const storedMessages = useChatStore.getState().messages;
     const inferenceSettings = useChatStore.getState().inferenceSettings;
 
-    const completion = await engine.chat.completions.create({
-      stream: true,
-      messages: [
-        {
-          role: "system",
-          content:
-            customizedInstructions && isCustomizedInstructionsEnabled
-              ? "You are a helpful assistant. Assist the user with their questions. You are also provided with the following information from the user, keep them in mind for your responses: " +
-              customizedInstructions
-              : "You are a helpful assistant. Assist the user with their questions.",
-        },
-        ...storedMessages,
-        { role: "user", content: input },
-      ],
-      temperature: inferenceSettings.temperature,
-      top_p: inferenceSettings.topP,
-      max_tokens: inferenceSettings.maxTokens
-    });
-    for await (const chunk of completion) {
-      const delta = chunk.choices[0].delta.content;
-      if (delta) {
-        yield delta;
+    try {
+      const completion = await engine.chat.completions.create({
+        stream: true,
+        messages: [
+          {
+            role: "system",
+            content:
+              customizedInstructions && isCustomizedInstructionsEnabled
+                ? "You are a helpful assistant. Assist the user with their questions. You are also provided with the following information from the user, keep them in mind for your responses: " +
+                customizedInstructions
+                : "You are a helpful assistant. Assist the user with their questions.",
+          },
+          ...storedMessages,
+          { role: "user", content: input },
+        ],
+        temperature: inferenceSettings.temperature,
+        top_p: inferenceSettings.topP,
+        max_tokens: inferenceSettings.maxTokens
+      });
+      
+      for await (const chunk of completion) {
+        // Check if generation was canceled
+        if (this.generationAbortController?.signal.aborted) {
+          console.log("Generation was canceled");
+          break;
+        }
+        
+        const delta = chunk.choices[0].delta.content;
+        if (delta) {
+          yield delta;
+        }
       }
+    } catch (error) {
+      console.error("Generation error:", error);
+      throw error;
+    } finally {
+      // Clean up abort controller
+      this.generationAbortController = null;
     }
   }
 
@@ -152,48 +423,99 @@ export default class WebLLMHelper {
     userInput: string
   ): Promise<string | undefined> {
     return new Promise((resolve, reject) => {
-      const worker = new Worker(
-        new URL("./vector-store-worker.ts", import.meta.url),
-        {
-          type: "module",
+      let worker: Worker | null = null;
+      let timeoutId: NodeJS.Timeout | null = null;
+      
+      // Timeout after 30 seconds
+      const TIMEOUT_MS = 30000;
+      
+      const cleanup = () => {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
         }
-      );
+        if (worker) {
+          worker.terminate();
+          worker = null;
+        }
+      };
 
-      worker.onmessage = (e: MessageEvent) => {
-        const results = e.data;
-        if (results) {
-          // Process results
-          const qaPrompt = `\nText content from a file is provided between the <context> tags. The file name and type is also included in the <context> tag. Answer the user question based on the context provied. Also, always keep old messages in mind when answering questions.
-          If the question cannot be answered using the context provided, answer with "I don't know".
+      try {
+        worker = new Worker(
+          new URL("./vector-store-worker.ts", import.meta.url),
+          {
+            type: "module",
+          }
+        );
+
+        // Set timeout
+        timeoutId = setTimeout(() => {
+          cleanup();
+          reject(new Error("Document processing timed out. The file may be too large."));
+        }, TIMEOUT_MS);
+
+        worker.onmessage = (e: MessageEvent) => {
+          const results = e.data;
+          cleanup();
           
-          ==========
-          <context  file=${fileName} fileType="type: ${fileType}">
-          ${results.map((result: any) => result.pageContent).join("")}\n
-          </context>
-          ==========
+          // Check if worker returned an error
+          if (results && results.error) {
+            reject(new Error("Failed to process document: " + results.error));
+            return;
+          }
+          
+          if (results && Array.isArray(results)) {
+            // Process results
+            const qaPrompt = `\nText content from a file is provided between the <context> tags. The file name and type is also included in the <context> tag. Answer the user question based on the context provied. Also, always keep old messages in mind when answering questions.
+            If the question cannot be answered using the context provided, answer with "I don't know".
+            
+            ==========
+            <context  file=${fileName} fileType="type: ${fileType}">
+            ${results.map((result: any) => result.pageContent).join("")}\n
+            </context>
+            ==========
 
-          User question:
-          "${userInput}"
+            User question:
+            "${userInput}"
 
-          Answer:
-          ""
-          `;
-          resolve(qaPrompt);
-        } else {
-          reject("Error processing documents");
-        }
-      };
+            Answer:
+            ""
+            `;
+            resolve(qaPrompt);
+          } else {
+            reject(new Error("Invalid results from document processing"));
+          }
+        };
 
-      worker.onerror = (err) => {
-        console.error("Vector search worker error:", err);
-        reject(err);
-      };
+        worker.onerror = (err) => {
+          console.error("Vector search worker error:", err);
+          cleanup();
+          reject(new Error("Failed to process document: " + (err.message || "Unknown error")));
+        };
 
-      worker.postMessage({
-        fileText,
-        fileType,
-        userInput,
-      });
+        worker.postMessage({
+          fileText,
+          fileType,
+          userInput,
+        });
+      } catch (error) {
+        cleanup();
+        reject(error);
+      }
     });
+  }
+
+  // Reset all state (useful for cleanup)
+  public reset(): void {
+    this.cancelLoading();
+    this.cancelGeneration();
+    this.loadState = {
+      isLoading: false,
+      isRetrying: false,
+      retryCount: 0,
+      modelName: null,
+    };
+    this.abortController = null;
+    this.generationAbortController = null;
   }
 }

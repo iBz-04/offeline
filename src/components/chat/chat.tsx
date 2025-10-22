@@ -25,6 +25,9 @@ export default function Chat({
   isMobile,
   messages,
   onRegenerate,
+  onRetry,
+  loadingError,
+  isModelLoading,
 }: ChatProps) {
   const files = useChatStore((state) => state.files);
   const setFiles = useChatStore((state) => state.setFiles);
@@ -44,6 +47,9 @@ export default function Chat({
         stop={stop}
         isMobile={isMobile}
         onRegenerate={onRegenerate}
+        onRetry={onRetry}
+        loadingError={loadingError}
+        isModelLoading={isModelLoading}
       />
 
       {files && fileText && (
@@ -102,6 +108,8 @@ export default function Chat({
         handleSubmit={handleSubmit}
         stop={stop}
         messages={messages}
+        loadingError={loadingError}
+        isModelLoading={isModelLoading}
       />
     </div>
   );
