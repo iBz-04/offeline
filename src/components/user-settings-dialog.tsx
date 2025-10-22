@@ -11,6 +11,7 @@ import {
 
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import EditUsernameForm from "./edit-username-form";
+import ClearCacheButton from "./clear-cache-button";
 import { Settings } from "lucide-react";
 import React from "react";
 
@@ -37,6 +38,10 @@ export default function UserSettingsDialog({
         <DialogHeader className="space-y-4">
           <DialogTitle className="mb-5">Settings</DialogTitle>
           <EditUsernameForm setOpen={setOpen} />
+          <div className="pt-4 border-t">
+            <p className="text-sm text-muted-foreground mb-3">Storage & Performance</p>
+            <ClearCacheButton />
+          </div>
         </DialogHeader>
       </DialogContent>
     </Dialog>
