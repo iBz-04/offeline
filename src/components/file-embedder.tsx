@@ -4,6 +4,12 @@ import React, { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { Button } from "./ui/button";
 import { PaperclipIcon } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./ui/tooltip";
 
 interface FileEmbedderProps {
   handleEmbed: (acceptedFiles: File[]) => void;
@@ -49,14 +55,26 @@ const FileEmbedder: React.FC<FileEmbedderProps> = ({ handleEmbed }) => {
   });
 
   return (
-    <>
-      <div {...getRootProps()}>
-        <input {...getInputProps()} />
-        <Button type='button' variant="ghost" size="icon" className="rounded-full shrink-0">
-          <PaperclipIcon className="w-5 h-5" />
-        </Button>
-      </div>
-    </>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="relative">
+            <div {...getRootProps()}>
+              <input {...getInputProps()} />
+              <Button type='button' variant="ghost" size="icon" className="rounded-full shrink-0">
+                <PaperclipIcon className="w-5 h-5" />
+              </Button>
+            </div>
+            <span className="absolute -top-2 -right-2 inline-flex items-center justify-center h-5 px-1.5 text-xs font-bold rounded-full bg-purple-600 text-white">
+              BETA
+            </span>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="top">
+          <p>File embedding is in beta. Supports PDF, MD, DOCX, TXT, CSV, RTF</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };
 

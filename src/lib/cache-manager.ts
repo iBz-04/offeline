@@ -1,8 +1,20 @@
+const PRESERVED_KEYS = ['chatty_user', 'theme'];
+
 export const clearAppCache = async () => {
   try {
     if (typeof window === 'undefined') return;
 
+    const preserved = PRESERVED_KEYS.reduce((acc, key) => {
+      const value = localStorage.getItem(key);
+      if (value) acc[key] = value;
+      return acc;
+    }, {} as Record<string, string>);
+
     localStorage.clear();
+    
+    Object.entries(preserved).forEach(([key, value]) => {
+      localStorage.setItem(key, value);
+    });
     
     if ('caches' in window) {
       const cacheNames = await caches.keys();
