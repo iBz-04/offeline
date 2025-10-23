@@ -47,10 +47,17 @@ declare global {
         getModelsDirectory: () => Promise<string>;
         getCurrentModel: () => Promise<string | null>;
         isModelLoaded: () => Promise<boolean>;
+        downloadModel: (url: string, filename: string) => Promise<{ success: boolean; path?: string; error?: string }>;
 
         onReady: (callback: () => void) => () => void;
         onModelLoaded: (callback: (modelPath: string) => void) => () => void;
         onChatToken: (callback: (token: string) => void) => () => void;
+        onDownloadProgress: (callback: (progress: {
+          filename: string;
+          downloaded: number;
+          total: number;
+          percent: number;
+        }) => void) => () => void;
       };
     };
   }

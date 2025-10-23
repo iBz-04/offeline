@@ -57,6 +57,7 @@ contextBridge.exposeInMainWorld('omnibotAPI', {
     getModelsDirectory: () => ipcRenderer.invoke('llamacpp:getModelsDirectory'),
     getCurrentModel: () => ipcRenderer.invoke('llamacpp:getCurrentModel'),
     isModelLoaded: () => ipcRenderer.invoke('llamacpp:isModelLoaded'),
+    downloadModel: (url: string, filename: string) => ipcRenderer.invoke('llamacpp:downloadModel', url, filename),
 
     onReady: (callback: () => void) => {
       ipcRenderer.on('llamacpp:ready', callback);
@@ -69,6 +70,10 @@ contextBridge.exposeInMainWorld('omnibotAPI', {
     onChatToken: (callback: (token: string) => void) => {
       ipcRenderer.on('llamacpp:chatToken', (_event, token) => callback(token));
       return () => ipcRenderer.removeAllListeners('llamacpp:chatToken');
+    },
+    onDownloadProgress: (callback: (progress: any) => void) => {
+      ipcRenderer.on('llamacpp:downloadProgress', (_event, progress) => callback(progress));
+      return () => ipcRenderer.removeAllListeners('llamacpp:downloadProgress');
     },
   },
 });

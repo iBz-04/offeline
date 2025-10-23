@@ -33,13 +33,93 @@ const RECOMMENDED_MODELS = [
   { name: 'phi3.5:3.8b', size: '2.2 GB', description: 'High quality (slightly larger)' },
 ];
 
+const RECOMMENDED_GGUF_MODELS = [
+  {
+    name: 'Qwen2.5-0.5B-Instruct-Q4',
+    size: '352 MB',
+    description: 'Ultra-fast, great for quick responses',
+    url: 'https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf',
+    filename: 'qwen2.5-0.5b-instruct-q4_k_m.gguf'
+  },
+  {
+    name: 'Qwen2.5-1.5B-Instruct-Q4',
+    size: '934 MB',
+    description: 'Balanced speed and quality',
+    url: 'https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q4_k_m.gguf',
+    filename: 'qwen2.5-1.5b-instruct-q4_k_m.gguf'
+  },
+  {
+    name: 'Llama-3.2-1B-Instruct-Q4',
+    size: '670 MB',
+    description: 'Fast and capable',
+    url: 'https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF/resolve/main/Llama-3.2-1B-Instruct-Q4_K_M.gguf',
+    filename: 'Llama-3.2-1B-Instruct-Q4_K_M.gguf'
+  },
+  {
+    name: 'Phi-3.5-mini-instruct-Q4',
+    size: '2.2 GB',
+    description: 'High quality (slightly larger)',
+    url: 'https://huggingface.co/bartowski/Phi-3.5-mini-instruct-GGUF/resolve/main/Phi-3.5-mini-instruct-Q4_K_M.gguf',
+    filename: 'Phi-3.5-mini-instruct-Q4_K_M.gguf'
+  },
+];
+
 export default function BackendSelector({ currentBackend, onBackendChange }: BackendSelectorProps) {
   const [open, setOpen] = useState(false);
   const [modelToPull, setModelToPull] = useState('');
   const [showRecommended, setShowRecommended] = useState(true);
+  const [showRecommendedGGUF, setShowRecommendedGGUF] = useState(true);
   const [showWebLLMWarning, setShowWebLLMWarning] = useState(false);
+  const [downloadingModel, setDownloadingModel] = useState<string | null>(null);
+  const [downloadProgress, setDownloadProgress] = useState<{ filename: string; percent: number } | null>(null);
   const ollama = useOllama();
   const llamacpp = useLlamaCpp();
+
+  React.useEffect(() => {
+    if (!window.omnibotAPI?.llamacpp?.onDownloadProgress) return;
+
+    const cleanup = window.omnibotAPI.llamacpp.onDownloadProgress((progress) => {
+      setDownloadProgress(progress);
+    });
+
+    return cleanup;
+  }, []);
+
+  const isGGUFModelInstalled = (filename: string): boolean => {
+    return llamacpp.models.some(m => m.name === filename);
+  };
+
+  const handleDownloadGGUF = async (url: string, filename: string) => {
+    if (!window.omnibotAPI?.llamacpp?.downloadModel) {
+      console.error('Download API not available');
+      return;
+    }
+    
+    console.log('Starting download:', { url, filename });
+    
+    try {
+      setDownloadingModel(filename);
+      setDownloadProgress(null);
+      
+      const result = await window.omnibotAPI.llamacpp.downloadModel(url, filename);
+      
+      console.log('Download result:', result);
+      
+      if (result.success) {
+        await llamacpp.refreshModels();
+        setShowRecommendedGGUF(false);
+      } else {
+        console.error('Download failed:', result.error);
+        alert(`Download failed: ${result.error}`);
+      }
+    } catch (err: any) {
+      console.error('Download error:', err);
+      alert(`Download error: ${err.message}`);
+    } finally {
+      setDownloadingModel(null);
+      setDownloadProgress(null);
+    }
+  };
 
   const handleBackendChange = (backend: LLMBackend) => {
     // Show warning when trying to use WebLLM on desktop
@@ -418,6 +498,82 @@ export default function BackendSelector({ currentBackend, onBackendChange }: Bac
                     <RefreshCw className={`w-4 h-4 ${llamacpp.loading ? 'animate-spin' : ''}`} />
                   </Button>
                 </div>
+
+                {showRecommendedGGUF && (
+                  <div className="space-y-2 mb-3 p-3 bg-muted/50 rounded-md">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-muted-foreground">Recommended Models</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 text-xs"
+                        onClick={() => setShowRecommendedGGUF(false)}
+                      >
+                        Hide
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 gap-2">
+                      {RECOMMENDED_GGUF_MODELS.map((model) => {
+                        const isInstalled = isGGUFModelInstalled(model.filename);
+                        const isDownloading = downloadingModel === model.filename;
+                        return (
+                          <div
+                            key={model.filename}
+                            className="flex items-center justify-between p-2 bg-background rounded border hover:border-primary transition-colors"
+                          >
+                            <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+                              <span className="text-sm font-medium truncate">{model.name}</span>
+                              <span className="text-xs text-muted-foreground">{model.description}</span>
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">{model.size}</span>
+                              {isInstalled ? (
+                                <span className="text-xs px-2 py-1 rounded bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 flex items-center gap-1">
+                                  <Check className="w-3 h-3" />
+                                  Ready
+                                </span>
+                              ) : isDownloading ? (
+                                <div className="flex flex-col gap-1 min-w-[80px]">
+                                  <span className="text-xs text-muted-foreground text-center">
+                                    {downloadProgress?.percent || 0}%
+                                  </span>
+                                  <div className="w-full bg-secondary rounded-full h-1.5">
+                                    <div
+                                      className="bg-primary h-1.5 rounded-full transition-all"
+                                      style={{ width: `${downloadProgress?.percent || 0}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7"
+                                  onClick={() => handleDownloadGGUF(model.url, model.filename)}
+                                  disabled={downloadingModel !== null}
+                                >
+                                  <Download className="w-3 h-3 mr-1" />
+                                  Get
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {!showRecommendedGGUF && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full text-xs mb-2"
+                    onClick={() => setShowRecommendedGGUF(true)}
+                  >
+                    Show recommended models
+                  </Button>
+                )}
 
                 <div className="h-48 border rounded-md p-2 overflow-y-auto">
                   {llamacpp.models.length === 0 ? (

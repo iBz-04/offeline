@@ -1,6 +1,8 @@
 import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as https from 'https';
+import * as http from 'http';
 import { OllamaManager } from './ollama-manager';
 import { LlamaCppManager } from './llama-cpp-manager';
 
@@ -202,4 +204,86 @@ ipcMain.handle('llamacpp:getCurrentModel', () => {
 
 ipcMain.handle('llamacpp:isModelLoaded', () => {
   return llamaCppManager.isModelLoaded();
+});
+
+ipcMain.handle('llamacpp:downloadModel', async (_event, url: string, filename: string) => {
+  console.log('[Main] Download requested:', { url, filename });
+  
+  const modelsDir = llamaCppManager.getModelsDirectory();
+  console.log('[Main] Models directory:', modelsDir);
+  
+  await fs.promises.mkdir(modelsDir, { recursive: true });
+  
+  const destPath = path.join(modelsDir, filename);
+  console.log('[Main] Destination path:', destPath);
+  
+  return new Promise<{ success: boolean; path?: string; error?: string }>((resolve) => {
+    const downloadWithRedirect = (downloadUrl: string, maxRedirects = 5) => {
+      console.log('[Main] Downloading from:', downloadUrl);
+      
+      if (maxRedirects === 0) {
+        console.error('[Main] Too many redirects');
+        resolve({ success: false, error: 'Too many redirects' });
+        return;
+      }
+
+      const lib = downloadUrl.startsWith('https') ? https : http;
+      const req = lib.get(downloadUrl, (res) => {
+        console.log('[Main] Response status:', res.statusCode);
+        
+        if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+          console.log('[Main] Redirecting to:', res.headers.location);
+          downloadWithRedirect(res.headers.location, maxRedirects - 1);
+          return;
+        }
+
+        if (res.statusCode !== 200) {
+          console.error('[Main] HTTP error:', res.statusCode);
+          resolve({ success: false, error: `HTTP ${res.statusCode}` });
+          return;
+        }
+
+        const totalBytes = parseInt(res.headers['content-length'] || '0', 10);
+        let downloadedBytes = 0;
+        
+        console.log('[Main] Starting download, total bytes:', totalBytes);
+
+        const fileStream = fs.createWriteStream(destPath);
+        
+        res.on('data', (chunk) => {
+          downloadedBytes += chunk.length;
+          if (totalBytes > 0) {
+            const percent = Math.round((downloadedBytes / totalBytes) * 100);
+            mainWindow?.webContents.send('llamacpp:downloadProgress', {
+              filename,
+              downloaded: downloadedBytes,
+              total: totalBytes,
+              percent,
+            });
+          }
+        });
+
+        res.pipe(fileStream);
+
+        fileStream.on('finish', () => {
+          fileStream.close();
+          console.log('[Main] Download complete:', destPath);
+          resolve({ success: true, path: destPath });
+        });
+
+        fileStream.on('error', (err) => {
+          console.error('[Main] File stream error:', err);
+          fs.unlink(destPath, () => {});
+          resolve({ success: false, error: err.message });
+        });
+      });
+
+      req.on('error', (err) => {
+        console.error('[Main] Request error:', err);
+        resolve({ success: false, error: err.message });
+      });
+    };
+
+    downloadWithRedirect(url);
+  });
 });
