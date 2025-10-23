@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { WebLLMProvider } from "@/providers/web-llm-provider";
 import { OllamaProvider } from "@/providers/ollama-provider";
+import { LlamaCppProvider } from "@/providers/llama-cpp-provider";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { Suspense } from "react";
 import { LoadingScreenWrapper } from "@/components/loading-screen-wrapper";
@@ -88,16 +89,18 @@ export default function RootLayout({
       </head>
       <body className={GeistSans.className}>
         <LoadingScreenWrapper>
-          <OllamaProvider>
-            <WebLLMProvider>
-              <ThemeProvider attribute="class" defaultTheme="system">
-                <Suspense>
-                  {children}
-                </Suspense>
-                <Toaster position="top-right" />
-              </ThemeProvider>
-            </WebLLMProvider>
-          </OllamaProvider>
+          <LlamaCppProvider>
+            <OllamaProvider>
+              <WebLLMProvider>
+                <ThemeProvider attribute="class" defaultTheme="system">
+                  <Suspense>
+                    {children}
+                  </Suspense>
+                  <Toaster position="top-right" />
+                </ThemeProvider>
+              </WebLLMProvider>
+            </OllamaProvider>
+          </LlamaCppProvider>
         </LoadingScreenWrapper>
       </body>
       <GoogleAnalytics gaId="G-4186JP0XGB" />

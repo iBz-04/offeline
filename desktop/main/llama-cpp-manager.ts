@@ -51,7 +51,7 @@ export class LlamaCppManager extends EventEmitter {
       const mod = await dynamicImport('node-llama-cpp');
       this.llamaModule = mod;
 
-      // Resolve GPU/backend configuration with consumer-friendly defaults (CPU by default)
+      // CPU by default
       const envGpu = (process.env.LLAMA_GPU || '').trim().toLowerCase();
       const envBuild = (process.env.LLAMA_BUILD || '').trim().toLowerCase();
       const envDebug = (process.env.LLAMA_DEBUG || '').trim().toLowerCase();
@@ -75,16 +75,13 @@ export class LlamaCppManager extends EventEmitter {
         } else if (envGpu === 'cuda' || envGpu === 'vulkan' || envGpu === 'metal') {
           gpuOption = envGpu as GpuOpt;
         } else {
-          // Unrecognized input -> keep auto
           gpuOption = 'auto';
         }
       }
 
-      // Prefer a supported GPU on this machine when explicitly using auto
       if (gpuOption === 'auto') {
         try {
           const supported: Array<'cuda' | 'vulkan' | 'metal'> = await mod.getLlamaGpuTypes('supported');
-          // On Windows, prefer CUDA if available, then Vulkan; on macOS, prefer Metal
           if (process.platform === 'win32') {
             if (supported.includes('cuda')) gpuOption = 'cuda';
             else if (supported.includes('vulkan')) gpuOption = 'vulkan';
@@ -93,19 +90,15 @@ export class LlamaCppManager extends EventEmitter {
             if (supported.includes('metal')) gpuOption = 'metal';
             else gpuOption = false;
           } else {
-            // Linux or others: prefer CUDA then Vulkan
             if (supported.includes('cuda')) gpuOption = 'cuda';
             else if (supported.includes('vulkan')) gpuOption = 'vulkan';
             else gpuOption = false;
           }
         } catch {
-          // If detection fails, fall back to CPU to avoid noisy errors
           gpuOption = false;
         }
       }
 
-      // Build option (useful on Electron where default is "never").
-      // Accept: auto | never | try | forceRebuild
       let buildOption: 'auto' | 'never' | 'try' | 'forceRebuild' | undefined = this.overrides.build;
       if (!buildOption) {
         if (envBuild === 'auto' || envBuild === 'never' || envBuild === 'try' || envBuild === 'forcerebuild') {

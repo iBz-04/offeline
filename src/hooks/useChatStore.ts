@@ -7,7 +7,7 @@ import { MessageWithFiles } from "@/lib/types";
 
 const LOCAL_SELECTED_MODEL = "selectedModel";
 
-export type LLMBackend = 'webllm' | 'ollama';
+export type LLMBackend = 'webllm' | 'ollama' | 'llamacpp';
 
 export interface InferenceSettings {
   contextWindowSize: number;

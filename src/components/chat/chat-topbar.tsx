@@ -18,6 +18,7 @@ import { ModelBadge } from "../ui/model-badge";
 import { InfoIcon } from "lucide-react";
 import BackendSelector from "../backend-selector";
 import { useOllama } from "@/providers/ollama-provider";
+import { useLlamaCpp } from "@/providers/llama-cpp-provider";
 
 interface ChatTopbarProps {
   chatId?: string;
@@ -34,12 +35,13 @@ export default function ChatTopbar({ chatId, stop }: ChatTopbarProps) {
   const selectedBackend = useChatStore((state) => state.selectedBackend);
   const setSelectedBackend = useChatStore((state) => state.setSelectedBackend);
 
-  // Ollama context
   const ollama = useOllama();
+  const llamacpp = useLlamaCpp();
 
-  // Current display name based on backend
   const currentDisplayName = selectedBackend === 'ollama' 
     ? (ollama.currentModel || 'No Ollama model selected')
+    : selectedBackend === 'llamacpp'
+    ? (llamacpp.currentModel?.split('/').pop()?.split('\\').pop() || 'No model loaded')
     : selectedModel.displayName;
 
   return (
@@ -120,9 +122,8 @@ export default function ChatTopbar({ chatId, stop }: ChatTopbarProps) {
                 </Button>
               ))}
             </>
-          ) : (
+          ) : selectedBackend === 'ollama' ? (
             <>
-              {/* Ollama Models */}
               <div className="p-2 mb-2 border-b text-xs text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <InfoIcon className="w-3 h-3" />
@@ -142,6 +143,35 @@ export default function ChatTopbar({ chatId, stop }: ChatTopbarProps) {
                     className="w-full justify-start flex gap-2 items-center truncate"
                     onClick={() => {
                       ollama.setModel(model.name);
+                      setOpen(false);
+                    }}
+                  >
+                    {model.name}
+                  </Button>
+                ))
+              )}
+            </>
+          ) : (
+            <>
+              <div className="p-2 mb-2 border-b text-xs text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <InfoIcon className="w-3 h-3" />
+                  <span className="font-medium">llama.cpp GGUF Models</span>
+                </div>
+              </div>
+              
+              {llamacpp.models.length === 0 ? (
+                <div className="p-4 text-center text-sm text-muted-foreground">
+                  No GGUF models found. Place .gguf files in the models directory.
+                </div>
+              ) : (
+                llamacpp.models.map((model) => (
+                  <Button
+                    key={model.path}
+                    variant="ghost"
+                    className="w-full justify-start flex gap-2 items-center truncate"
+                    onClick={async () => {
+                      await llamacpp.setModel(model.path);
                       setOpen(false);
                     }}
                   >

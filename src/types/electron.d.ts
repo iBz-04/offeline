@@ -31,6 +31,27 @@ declare global {
         }) => void) => () => void;
         onChatToken: (callback: (token: string) => void) => () => void;
       };
+
+      llamacpp?: {
+        initialize: () => Promise<void>;
+        listModels: () => Promise<Array<{
+          name: string;
+          path: string;
+          size: number;
+        }>>;
+        loadModel: (modelPath: string) => Promise<void>;
+        unloadModel: () => Promise<void>;
+        chat: (messages: Array<{ role: string; content: string }>) => Promise<string>;
+        chatWithSchema: (messages: Array<{ role: string; content: string }>, schema: any) => Promise<any>;
+        getEmbedding: (text: string) => Promise<readonly number[]>;
+        getModelsDirectory: () => Promise<string>;
+        getCurrentModel: () => Promise<string | null>;
+        isModelLoaded: () => Promise<boolean>;
+
+        onReady: (callback: () => void) => () => void;
+        onModelLoaded: (callback: (modelPath: string) => void) => () => void;
+        onChatToken: (callback: (token: string) => void) => () => void;
+      };
     };
   }
 }

@@ -11,11 +11,12 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Settings, Check, Download, Trash2, RefreshCw } from "lucide-react";
+import { Settings, Check, Download, Trash2, RefreshCw, Folder } from "lucide-react";
 import { useOllama } from "@/providers/ollama-provider";
+import { useLlamaCpp } from "@/providers/llama-cpp-provider";
 import { Input } from "@/components/ui/input";
 
-type LLMBackend = 'webllm' | 'ollama';
+type LLMBackend = 'webllm' | 'ollama' | 'llamacpp';
 
 interface BackendSelectorProps {
   currentBackend: LLMBackend;
@@ -34,6 +35,7 @@ export default function BackendSelector({ currentBackend, onBackendChange }: Bac
   const [modelToPull, setModelToPull] = useState('');
   const [showRecommended, setShowRecommended] = useState(true);
   const ollama = useOllama();
+  const llamacpp = useLlamaCpp();
 
   const formatBytes = (bytes: number) => {
     if (bytes === 0) return '0 B';
@@ -43,9 +45,13 @@ export default function BackendSelector({ currentBackend, onBackendChange }: Bac
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
   };
 
+  const isModelInstalled = (modelName: string): boolean => {
+    return ollama.models.some(m => m.name === modelName);
+  };
+
   const handlePullModel = async (modelName?: string) => {
     const model = modelName || modelToPull.trim();
-    if (!model) return;
+    if (!model || isModelInstalled(model)) return;
     await ollama.pullModel(model);
     setModelToPull('');
     setShowRecommended(false);
@@ -56,7 +62,7 @@ export default function BackendSelector({ currentBackend, onBackendChange }: Bac
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
           <Settings className="w-4 h-4" />
-          {currentBackend === 'webllm' ? 'WebLLM' : 'Ollama'}
+          {currentBackend === 'webllm' ? 'WebLLM' : currentBackend === 'ollama' ? 'Ollama' : 'llama.cpp'}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
@@ -70,7 +76,7 @@ export default function BackendSelector({ currentBackend, onBackendChange }: Bac
         <div className="space-y-6 overflow-y-auto pr-2 max-h-[calc(85vh-8rem)]">
           <div className="space-y-3">
             <h3 className="font-semibold">Select Backend</h3>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <Button
                 variant={currentBackend === 'webllm' ? 'default' : 'outline'}
                 className="h-auto py-4 flex flex-col items-start gap-2"
@@ -81,7 +87,7 @@ export default function BackendSelector({ currentBackend, onBackendChange }: Bac
                   {currentBackend === 'webllm' && <Check className="w-4 h-4 ml-auto" />}
                 </div>
                 <span className="text-xs text-left opacity-70">
-                  Browser-based • WebGPU • Same as web version
+                  Browser-based • WebGPU
                 </span>
               </Button>
 
@@ -97,8 +103,25 @@ export default function BackendSelector({ currentBackend, onBackendChange }: Bac
                 </div>
                 <span className="text-xs text-left opacity-70">
                   {ollama.isAvailable 
-                    ? 'Native • GPU acceleration • Better performance'
-                    : 'Not available in web mode'}
+                    ? 'Server • Auto GPU'
+                    : 'Desktop only'}
+                </span>
+              </Button>
+
+              <Button
+                variant={currentBackend === 'llamacpp' ? 'default' : 'outline'}
+                className="h-auto py-4 flex flex-col items-start gap-2"
+                onClick={() => onBackendChange('llamacpp')}
+                disabled={!llamacpp.isAvailable}
+              >
+                <div className="flex items-center gap-2 w-full">
+                  <span className="font-semibold">llama.cpp</span>
+                  {currentBackend === 'llamacpp' && <Check className="w-4 h-4 ml-auto" />}
+                </div>
+                <span className="text-xs text-left opacity-70">
+                  {llamacpp.isAvailable 
+                    ? 'Direct • Advanced'
+                    : 'Desktop only'}
                 </span>
               </Button>
             </div>
@@ -197,30 +220,40 @@ export default function BackendSelector({ currentBackend, onBackendChange }: Bac
                       </Button>
                     </div>
                     <div className="grid grid-cols-1 gap-2">
-                      {RECOMMENDED_MODELS.map((model) => (
-                        <div
-                          key={model.name}
-                          className="flex items-center justify-between p-2 bg-background rounded border hover:border-primary transition-colors"
-                        >
-                          <div className="flex flex-col gap-0.5">
-                            <span className="text-sm font-medium">{model.name}</span>
-                            <span className="text-xs text-muted-foreground">{model.description}</span>
+                      {RECOMMENDED_MODELS.map((model) => {
+                        const isInstalled = isModelInstalled(model.name);
+                        return (
+                          <div
+                            key={model.name}
+                            className="flex items-center justify-between p-2 bg-background rounded border hover:border-primary transition-colors"
+                          >
+                            <div className="flex flex-col gap-0.5">
+                              <span className="text-sm font-medium">{model.name}</span>
+                              <span className="text-xs text-muted-foreground">{model.description}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">{model.size}</span>
+                              {isInstalled ? (
+                                <span className="text-xs px-2 py-1 rounded bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 flex items-center gap-1">
+                                  <Check className="w-3 h-3" />
+                                  Installed
+                                </span>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7"
+                                  onClick={() => handlePullModel(model.name)}
+                                  disabled={ollama.loading}
+                                >
+                                  <Download className="w-3 h-3 mr-1" />
+                                  Pull
+                                </Button>
+                              )}
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">{model.size}</span>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-7"
-                              onClick={() => handlePullModel(model.name)}
-                              disabled={ollama.loading}
-                            >
-                              <Download className="w-3 h-3 mr-1" />
-                              Pull
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -273,6 +306,97 @@ export default function BackendSelector({ currentBackend, onBackendChange }: Bac
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {llamacpp.isAvailable && (
+            <div className="space-y-3 border-t pt-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold">llama.cpp Status</h3>
+                <span className={`text-xs px-2 py-1 rounded ${llamacpp.isInitialized ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'}`}>
+                  {llamacpp.isInitialized ? 'Ready' : 'Initializing'}
+                </span>
+              </div>
+
+              {llamacpp.error && (
+                <div className="text-sm text-red-500 bg-red-50 dark:bg-red-950 p-2 rounded">
+                  {llamacpp.error}
+                </div>
+              )}
+
+              {llamacpp.modelsDirectory && (
+                <div className="text-xs text-muted-foreground bg-muted p-2 rounded flex items-start gap-2">
+                  <Folder className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <span className="break-all">{llamacpp.modelsDirectory}</span>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-medium">GGUF Models</h4>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={llamacpp.refreshModels}
+                    disabled={llamacpp.loading}
+                  >
+                    <RefreshCw className={`w-4 h-4 ${llamacpp.loading ? 'animate-spin' : ''}`} />
+                  </Button>
+                </div>
+
+                <div className="h-48 border rounded-md p-2 overflow-y-auto">
+                  {llamacpp.models.length === 0 ? (
+                    <div className="text-sm text-muted-foreground text-center py-8">
+                      <p>No GGUF models found</p>
+                      <p className="text-xs mt-2">Place .gguf files in the models directory</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {llamacpp.models.map((model) => (
+                        <div
+                          key={model.path}
+                          className="flex items-center justify-between p-2 hover:bg-accent rounded-md"
+                        >
+                          <div className="flex flex-col gap-1">
+                            <span className="text-sm font-medium">{model.name}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {formatBytes(model.size)}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {llamacpp.currentModel === model.path && (
+                              <span className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                Loaded
+                              </span>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => llamacpp.setModel(model.path)}
+                              disabled={llamacpp.loading}
+                            >
+                              Load
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {llamacpp.isModelLoaded && (
+                <div className="flex justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={llamacpp.unloadModel}
+                    disabled={llamacpp.loading}
+                  >
+                    Unload Model
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>

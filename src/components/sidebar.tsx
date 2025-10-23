@@ -126,15 +126,12 @@ export function Sidebar({ isCollapsed, chatId, stop }: SidebarProps) {
     const id = chatId.substring(5);
     const isCurrentChat = id === selectedChatId;
     
-    // Remove the chat from localStorage
     localStorage.removeItem(chatId);
     localStorage.removeItem(`chatFile_${id}`);
     
-    // Update the local chats list
     const updatedChats = localChats.filter(chat => chat.chatId !== chatId);
     setLocalChats(updatedChats);
     
-    // If deleting the current chat, navigate appropriately
     if (isCurrentChat) {
       stop();
       setFiles(undefined);

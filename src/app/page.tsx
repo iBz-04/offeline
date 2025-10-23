@@ -14,6 +14,7 @@ import ChatLayout from "@/components/chat/chat-layout";
 import { v4 as uuidv4 } from "uuid";
 import { useWebLLM } from "@/providers/web-llm-provider";
 import { useOllama } from "@/providers/ollama-provider";
+import { useLlamaCpp } from "@/providers/llama-cpp-provider";
 import UsernameForm from "@/components/username-form";
 import useMemoryStore from "@/hooks/useMemoryStore";
 import { MessageWithFiles } from "@/lib/types";
@@ -56,9 +57,9 @@ export default function Home() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Global providers
   const webLLMHelper = useWebLLM();
   const ollama = useOllama();
+  const llamacpp = useLlamaCpp();
 
   useEffect(() => {
     const id = searchParams.get('id');
@@ -190,9 +191,8 @@ export default function Home() {
       throw new Error("No Ollama model selected. Please select a model first.");
     }
 
-    // Build conversation history
     const messages = storedMessages.slice(0, -1)
-      .filter(msg => msg.content) // Filter out empty messages
+      .filter(msg => msg.content)
       .map(msg => ({
         role: msg.role,
         content: typeof msg.content === 'string' 
@@ -202,10 +202,8 @@ export default function Home() {
             : ''
       }));
 
-    // Add the current prompt
     messages.push({ role: "user", content: prompt });
 
-    // Add custom instructions if enabled
     if (isCustomizedInstructionsEnabled && customizedInstructions) {
       messages.unshift({
         role: "system",
@@ -215,7 +213,6 @@ export default function Home() {
 
     let assistantMessage = "";
 
-    // Set up token streaming listener
     const unsubToken = window.omnibotAPI?.ollama?.onChatToken((token: string) => {
       assistantMessage += token;
       setStoredMessages((message) => [
@@ -225,16 +222,62 @@ export default function Home() {
     });
 
     try {
-      // Send chat request
       const response = await ollama.chat(messages);
       
-      // Ensure final message is complete
       setStoredMessages((message) => [
         ...message.slice(0, -1),
         { role: "assistant", content: response },
       ]);
     } finally {
-      // Clean up listener
+      if (unsubToken) unsubToken();
+      setIsLoading(false);
+      setLoadingSubmit(false);
+    }
+  };
+
+  const generateLlamaCppCompletion = async (prompt: string) => {
+    if (!llamacpp.isModelLoaded) {
+      throw new Error("No llama.cpp model loaded. Please load a model first.");
+    }
+
+    const messages = storedMessages.slice(0, -1)
+      .filter(msg => msg.content)
+      .map(msg => ({
+        role: msg.role,
+        content: typeof msg.content === 'string' 
+          ? msg.content 
+          : Array.isArray(msg.content)
+            ? msg.content.map(c => c.type === 'text' ? c.text : '').join(' ')
+            : ''
+      }));
+
+    messages.push({ role: "user", content: prompt });
+
+    if (isCustomizedInstructionsEnabled && customizedInstructions) {
+      messages.unshift({
+        role: "system",
+        content: customizedInstructions
+      });
+    }
+
+    let assistantMessage = "";
+
+    const unsubToken = window.omnibotAPI?.llamacpp?.onChatToken((token: string) => {
+      assistantMessage += token;
+      setStoredMessages((message) => [
+        ...message.slice(0, -1),
+        { role: "assistant", content: assistantMessage },
+      ]);
+    });
+
+    try {
+      const response = await llamacpp.chat(messages);
+      
+      setStoredMessages((message) => [
+        ...message.slice(0, -1),
+        { role: "assistant", content: response },
+      ]);
+    } finally {
       if (unsubToken) unsubToken();
       setIsLoading(false);
       setLoadingSubmit(false);
@@ -292,20 +335,22 @@ export default function Home() {
 
     setInput("");
 
-    // Route to appropriate backend
     try {
       setLoadingSubmit(true);
 
       if (selectedBackend === 'ollama') {
-        // Check if Ollama is available and has a model selected
         if (!window.omnibotAPI?.ollama || !ollama.isRunning || !ollama.currentModel) {
           throw new Error("Ollama is not running or no model is selected. Please check your Ollama setup.");
         }
         
-        // Use Ollama for generation
         await generateOllamaCompletion(currentInput);
+      } else if (selectedBackend === 'llamacpp') {
+        if (!window.omnibotAPI?.llamacpp || !llamacpp.isModelLoaded) {
+          throw new Error("llama.cpp model not loaded. Please load a model first.");
+        }
+        
+        await generateLlamaCppCompletion(currentInput);
       } else {
-        // Use WebLLM for generation
         if (!loadedEngine) {
           // Load engine with retry support
           setIsModelLoading(true);
