@@ -130,7 +130,7 @@ export default class WebLLMHelper {
     const inferenceSettings = useChatStore.getState().inferenceSettings;
     
     // Vision models need larger context window for image embeddings
-    const isVisionModel = selectedModel.name.toLowerCase().includes('vision');
+    const isVisionModel = selectedModel?.name?.toLowerCase()?.includes('vision') ?? false;
     const contextWindowSize = isVisionModel ? 8192 : inferenceSettings.contextWindowSize;
 
     const chatOpts = {

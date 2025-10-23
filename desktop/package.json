@@ -1,0 +1,23 @@
+{
+  "name": "omnibot-desktop",
+  "version": "0.0.0",
+  "private": true,
+  "main": "dist/main/index.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "electron:dev": "npm run build && cross-env NODE_ENV=development electron .",
+    "electron:prod": "npm run build && cross-env NODE_ENV=production electron .",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "electron": "^26.1.0",
+    "electron-builder": "^24.0.0",
+    "typescript": "^5.5.0",
+    "@types/node": "^20.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  }
+}

@@ -16,6 +16,8 @@ import useChatStore from "@/hooks/useChatStore";
 import { Models, Model } from "@/lib/models";
 import { ModelBadge } from "../ui/model-badge";
 import { InfoIcon } from "lucide-react";
+import BackendSelector from "../backend-selector";
+import { useOllama } from "@/providers/ollama-provider";
 
 interface ChatTopbarProps {
   chatId?: string;
@@ -29,6 +31,16 @@ export default function ChatTopbar({ chatId, stop }: ChatTopbarProps) {
   const selectedModel = useChatStore((state) => state.selectedModel);
   const setSelectedModel = useChatStore((state) => state.setSelectedModel);
   const isLoading = useChatStore((state) => state.isLoading);
+  const selectedBackend = useChatStore((state) => state.selectedBackend);
+  const setSelectedBackend = useChatStore((state) => state.setSelectedBackend);
+
+  // Ollama context
+  const ollama = useOllama();
+
+  // Current display name based on backend
+  const currentDisplayName = selectedBackend === 'ollama' 
+    ? (ollama.currentModel || 'No Ollama model selected')
+    : selectedModel.displayName;
 
   return (
     <div className="w-full flex px-4 py-6  items-center justify-between lg:justify-center ">
@@ -51,8 +63,8 @@ export default function ChatTopbar({ chatId, stop }: ChatTopbarProps) {
             className="w-[180px] md:w-[300px] justify-between bg-accent dark:bg-card"
           >
             <div className="flex gap-2 items-center truncate">
-              <p className="truncate">{selectedModel.displayName}</p>
-              {selectedModel.badge && (
+              <p className="truncate">{currentDisplayName}</p>
+              {selectedBackend === 'webllm' && selectedModel.badge && (
                 <ModelBadge color={selectedModel.badgeColor}>{selectedModel.badge}</ModelBadge>
               )}
             </div>
@@ -60,53 +72,97 @@ export default function ChatTopbar({ chatId, stop }: ChatTopbarProps) {
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[200px] md:w-[300px] max-h-96 overflow-y-scroll p-1">
-          {/* Performance Color Legend */}
-          <div className="p-2 mb-2 border-b text-xs text-muted-foreground">
-            <div className="flex items-center gap-1 mb-1">
-              <InfoIcon className="w-3 h-3" />
-              <span className="font-medium">Performance Guide:</span>
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded bg-red-500"></div>
-                <span>Ultra Fast</span>
+          {selectedBackend === 'webllm' ? (
+            <>
+              {/* Performance Color Legend - only for WebLLM */}
+              <div className="p-2 mb-2 border-b text-xs text-muted-foreground">
+                <div className="flex items-center gap-1 mb-1">
+                  <InfoIcon className="w-3 h-3" />
+                  <span className="font-medium">Performance Guide:</span>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded bg-red-500"></div>
+                    <span>Ultra Fast</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded bg-yellow-500"></div>
+                    <span>Fast</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded bg-green-500"></div>
+                    <span>Balanced</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded bg-blue-500"></div>
+                    <span>Quality</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded bg-yellow-500"></div>
-                <span>Fast</span>
+              
+              {/* WebLLM Models */}
+              {Models.map((model) => (
+                <Button
+                  key={model.name}
+                  variant="ghost"
+                  className="w-full justify-start flex gap-2 items-center truncate"
+                  onClick={() => {
+                    setSelectedModel(model);
+                    setOpen(false);
+                  }}
+                >
+                  {model.displayName}
+                  {model.badge && (
+                    <ModelBadge color={model.badgeColor}>
+                      {model.badge}
+                    </ModelBadge>
+                  )}
+                </Button>
+              ))}
+            </>
+          ) : (
+            <>
+              {/* Ollama Models */}
+              <div className="p-2 mb-2 border-b text-xs text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <InfoIcon className="w-3 h-3" />
+                  <span className="font-medium">Ollama Models</span>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded bg-green-500"></div>
-                <span>Balanced</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded bg-blue-500"></div>
-                <span>Quality</span>
-              </div>
-            </div>
-          </div>
-          
-          {Models.map((model) => (
-            <Button
-              key={model.name}
-              variant="ghost"
-              className="w-full justify-start flex gap-2 items-center truncate"
-              onClick={() => {
-                setSelectedModel(model);
-                setOpen(false);
-              }}
-            >
-              {model.displayName}
-              {model.badge && (
-                <ModelBadge color={model.badgeColor}>
-                  {model.badge}
-                </ModelBadge>
+              
+              {ollama.models.length === 0 ? (
+                <div className="p-4 text-center text-sm text-muted-foreground">
+                  No models available. Pull a model using the Backend Selector.
+                </div>
+              ) : (
+                ollama.models.map((model) => (
+                  <Button
+                    key={model.name}
+                    variant="ghost"
+                    className="w-full justify-start flex gap-2 items-center truncate"
+                    onClick={() => {
+                      ollama.setModel(model.name);
+                      setOpen(false);
+                    }}
+                  >
+                    {model.name}
+                  </Button>
+                ))
               )}
-            </Button>
-          ))}
+            </>
+          )}
         </PopoverContent>
       </Popover>
-      <div></div>
+      
+      {/* Backend Selector for Desktop - only show if running in Electron */}
+      <div className="flex items-center gap-2">
+        {typeof window !== "undefined" && (window as any).omnibotAPI && (
+          <BackendSelector 
+            currentBackend={selectedBackend}
+            onBackendChange={setSelectedBackend}
+          />
+        )}
+      </div>
     </div>
   );
 }

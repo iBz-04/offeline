@@ -99,7 +99,7 @@ export default function ChatBottombar({
                 <div className="absolute flex left-3 z-10">
                   {/*
                   <MultiImagePicker 
-                    disabled={!selectedModel.name.includes("vision")} 
+                    disabled={!selectedModel?.name?.includes("vision")} 
                     onImagesPick={setBase64Images} 
                   />
                   */}

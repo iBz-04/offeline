@@ -160,14 +160,16 @@ export default function ChatList({
             </motion.div>
 
             <div className="space-y-4">
-              <motion.h1
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.1 }}
-                className="text-4xl md:text-6xl font-bold bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent"
-              >
-                How may I assist you?
-              </motion.h1>
+              {typeof window !== "undefined" && !window.omnibotAPI && (
+                <motion.h1
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.1 }}
+                  className="text-4xl md:text-6xl font-bold bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent"
+                >
+                  How may I assist you?
+                </motion.h1>
+              )}
               
               <motion.p
                 initial={{ y: 20, opacity: 0 }}

@@ -7,6 +7,8 @@ import { MessageWithFiles } from "@/lib/types";
 
 const LOCAL_SELECTED_MODEL = "selectedModel";
 
+export type LLMBackend = 'webllm' | 'ollama';
+
 export interface InferenceSettings {
   contextWindowSize: number;
   maxTokens: number;
@@ -16,6 +18,7 @@ export interface InferenceSettings {
 
 interface State {
   selectedModel: Model;
+  selectedBackend: LLMBackend;
   input: string;
   modelHasChanged: boolean;
   isLoading: boolean;
@@ -31,6 +34,7 @@ interface State {
 
 interface Actions {
   setSelectedModel: (model: Model) => void;
+  setSelectedBackend: (backend: LLMBackend) => void;
   handleInputChange: (
     e:
       | React.ChangeEvent<HTMLInputElement>
@@ -54,16 +58,28 @@ interface Actions {
   resetState: () => void;
 }
 
+// Helper to detect if running in Electron
+const isElectron = () => {
+  return typeof window !== 'undefined' && !!(window as any).omnibotAPI;
+};
+
+// Get default backend based on environment
+const getDefaultBackend = (): LLMBackend => {
+  return isElectron() ? 'ollama' : 'webllm';
+};
+
 const useChatStore = create<State & Actions>()(
   persist(
     (set) => ({
-      selectedModel: Models[1], // Omni O2 - Balanced (Recommended)
+      selectedModel: Models[1] || Models[0], // Fallback to first model if Models[1] doesn't exist
+      selectedBackend: getDefaultBackend(), // Ollama for desktop, WebLLM for web
       setSelectedModel: (model: Model) =>
         set((state: State) => ({
           selectedModel:
             state.selectedModel !== model ? model : state.selectedModel,
           modelHasChanged: true,
         })),
+      setSelectedBackend: (backend: LLMBackend) => set({ selectedBackend: backend }),
 
       input: "",
       handleInputChange: (
@@ -120,11 +136,24 @@ const useChatStore = create<State & Actions>()(
     }),
     {
       name: LOCAL_SELECTED_MODEL,
-      // Only save selectedModel and inferenceSettings to local storage with partialize
+      // Only save selectedModel, selectedBackend and inferenceSettings to local storage with partialize
       partialize: (state) => ({
         selectedModel: state.selectedModel,
+        selectedBackend: state.selectedBackend,
         inferenceSettings: state.inferenceSettings,
       }),
+      storage: createJSONStorage(() => localStorage),
+      onRehydrateStorage: () => (state) => {
+        // Ensure selectedModel is always valid after rehydration
+        if (!state?.selectedModel || !state.selectedModel.name) {
+          console.warn('Invalid selectedModel after rehydration, resetting to default');
+          state!.selectedModel = Models[1] || Models[0];
+        }
+        // Ensure selectedBackend is always valid, with Electron defaulting to Ollama
+        if (!state?.selectedBackend) {
+          state!.selectedBackend = getDefaultBackend();
+        }
+      },
     }
   )
 );
