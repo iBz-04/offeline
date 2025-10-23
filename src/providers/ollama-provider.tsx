@@ -121,6 +121,8 @@ export const OllamaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       await window.omnibotAPI.ollama.pullModel(modelName);
       await refreshModels();
+      // Small delay to show 100% completion before clearing
+      await new Promise(resolve => setTimeout(resolve, 500));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to pull model');
     } finally {

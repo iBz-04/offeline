@@ -22,9 +22,17 @@ interface BackendSelectorProps {
   onBackendChange: (backend: LLMBackend) => void;
 }
 
+const RECOMMENDED_MODELS = [
+  { name: 'qwen2.5:0.5b', size: '397 MB', description: 'Ultra-fast, great for quick responses' },
+  { name: 'qwen2.5:1.5b', size: '934 MB', description: 'Balanced speed and quality' },
+  { name: 'llama3.2:1b', size: '1.3 GB', description: 'Fast and capable' },
+  { name: 'phi3.5:3.8b', size: '2.2 GB', description: 'High quality (slightly larger)' },
+];
+
 export default function BackendSelector({ currentBackend, onBackendChange }: BackendSelectorProps) {
   const [open, setOpen] = useState(false);
   const [modelToPull, setModelToPull] = useState('');
+  const [showRecommended, setShowRecommended] = useState(true);
   const ollama = useOllama();
 
   const formatBytes = (bytes: number) => {
@@ -35,10 +43,12 @@ export default function BackendSelector({ currentBackend, onBackendChange }: Bac
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
   };
 
-  const handlePullModel = async () => {
-    if (!modelToPull.trim()) return;
-    await ollama.pullModel(modelToPull.trim());
+  const handlePullModel = async (modelName?: string) => {
+    const model = modelName || modelToPull.trim();
+    if (!model) return;
+    await ollama.pullModel(model);
     setModelToPull('');
+    setShowRecommended(false);
   };
 
   return (
@@ -49,7 +59,7 @@ export default function BackendSelector({ currentBackend, onBackendChange }: Bac
           {currentBackend === 'webllm' ? 'WebLLM' : 'Ollama'}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[80vh]">
+      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>LLM Backend Settings</DialogTitle>
           <DialogDescription>
@@ -57,7 +67,7 @@ export default function BackendSelector({ currentBackend, onBackendChange }: Bac
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-6 overflow-y-auto pr-2 max-h-[calc(85vh-8rem)]">
           <div className="space-y-3">
             <h3 className="font-semibold">Select Backend</h3>
             <div className="grid grid-cols-2 gap-3">
@@ -171,6 +181,61 @@ export default function BackendSelector({ currentBackend, onBackendChange }: Bac
 
               <div className="space-y-2">
                 <h4 className="text-sm font-medium">Pull New Model</h4>
+                
+                {/* Recommended Models */}
+                {showRecommended && (
+                  <div className="space-y-2 mb-3 p-3 bg-muted/50 rounded-md">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-muted-foreground">Recommended (under 1.5GB)</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 text-xs"
+                        onClick={() => setShowRecommended(false)}
+                      >
+                        Hide
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 gap-2">
+                      {RECOMMENDED_MODELS.map((model) => (
+                        <div
+                          key={model.name}
+                          className="flex items-center justify-between p-2 bg-background rounded border hover:border-primary transition-colors"
+                        >
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-sm font-medium">{model.name}</span>
+                            <span className="text-xs text-muted-foreground">{model.description}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">{model.size}</span>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7"
+                              onClick={() => handlePullModel(model.name)}
+                              disabled={ollama.loading}
+                            >
+                              <Download className="w-3 h-3 mr-1" />
+                              Pull
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {!showRecommended && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full text-xs"
+                    onClick={() => setShowRecommended(true)}
+                  >
+                    Show recommended models
+                  </Button>
+                )}
+                
                 <div className="flex gap-2">
                   <Input
                     placeholder="e.g., llama3.2, qwen2.5:0.5b"
@@ -179,7 +244,7 @@ export default function BackendSelector({ currentBackend, onBackendChange }: Bac
                     onKeyDown={(e) => e.key === 'Enter' && handlePullModel()}
                   />
                   <Button
-                    onClick={handlePullModel}
+                    onClick={() => handlePullModel()}
                     disabled={ollama.loading || !modelToPull.trim()}
                   >
                     <Download className="w-4 h-4" />
@@ -188,16 +253,20 @@ export default function BackendSelector({ currentBackend, onBackendChange }: Bac
                 {ollama.pullProgress && (
                   <div className="text-sm space-y-1">
                     <div className="flex justify-between">
-                      <span>{ollama.pullProgress.status}</span>
-                      <span>
-                        {Math.round((ollama.pullProgress.completed / ollama.pullProgress.total) * 100)}%
+                      <span className="truncate">{ollama.pullProgress.status}</span>
+                      <span className="ml-2">
+                        {ollama.pullProgress.total > 0 
+                          ? Math.round((ollama.pullProgress.completed / ollama.pullProgress.total) * 100)
+                          : 0}%
                       </span>
                     </div>
                     <div className="w-full bg-secondary rounded-full h-2">
                       <div
                         className="bg-primary h-2 rounded-full transition-all"
                         style={{
-                          width: `${(ollama.pullProgress.completed / ollama.pullProgress.total) * 100}%`
+                          width: `${ollama.pullProgress.total > 0 
+                            ? Math.min(100, (ollama.pullProgress.completed / ollama.pullProgress.total) * 100)
+                            : 0}%`
                         }}
                       />
                     </div>

@@ -149,9 +149,11 @@ const useChatStore = create<State & Actions>()(
           console.warn('Invalid selectedModel after rehydration, resetting to default');
           state!.selectedModel = Models[1] || Models[0];
         }
-        // Ensure selectedBackend is always valid, with Electron defaulting to Ollama
-        if (!state?.selectedBackend) {
-          state!.selectedBackend = getDefaultBackend();
+        // Always set backend based on environment (Electron = Ollama, Web = WebLLM)
+        const defaultBackend = getDefaultBackend();
+        if (!state?.selectedBackend || (isElectron() && state.selectedBackend !== 'ollama')) {
+          console.log('Setting backend to:', defaultBackend, 'for environment:', isElectron() ? 'Electron' : 'Web');
+          state!.selectedBackend = defaultBackend;
         }
       },
     }

@@ -123,13 +123,37 @@ export function Sidebar({ isCollapsed, chatId, stop }: SidebarProps) {
   };
 
   const handleDeleteChat = (chatId: string) => {
-    router.push("/");
     const id = chatId.substring(5);
+    const isCurrentChat = id === selectedChatId;
+    
+    // Remove the chat from localStorage
     localStorage.removeItem(chatId);
     localStorage.removeItem(`chatFile_${id}`);
+    
+    // Update the local chats list
+    const updatedChats = localChats.filter(chat => chat.chatId !== chatId);
+    setLocalChats(updatedChats);
+    
+    // If deleting the current chat, navigate appropriately
+    if (isCurrentChat) {
+      stop();
+      setFiles(undefined);
+      setFileText(null);
+      setChatId("");
+      setMessages(() => []);
+      
+      // If there are other chats, navigate to the most recent one
+      if (updatedChats.length > 0) {
+        const mostRecentChat = updatedChats[0];
+        router.push(`/?id=${mostRecentChat.chatId.substring(5)}`);
+      } else {
+        // If no chats left, go to home for a new chat
+        router.push("/");
+      }
+    }
+    
+    // Trigger storage event to update other components
     window.dispatchEvent(new Event("storage"));
-    setLocalChats(getLocalstorageChats());
-    setMessages(() => []);
   };
 
   const handleRenameFill = (chatId: string) => {
