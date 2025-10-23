@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Settings, Check, Download, Trash2, RefreshCw, Folder } from "lucide-react";
+import { Settings, Check, Download, Trash2, RefreshCw, Folder, ExternalLink } from "lucide-react";
 import { useOllama } from "@/providers/ollama-provider";
 import { useLlamaCpp } from "@/providers/llama-cpp-provider";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,9 @@ interface BackendSelectorProps {
   currentBackend: LLMBackend;
   onBackendChange: (backend: LLMBackend) => void;
 }
+
+// Check if running in Electron
+const isElectron = typeof window !== 'undefined' && !!(window as any).omnibotAPI;
 
 const RECOMMENDED_MODELS = [
   { name: 'qwen2.5:0.5b', size: '397 MB', description: 'Ultra-fast, great for quick responses' },
@@ -34,8 +37,19 @@ export default function BackendSelector({ currentBackend, onBackendChange }: Bac
   const [open, setOpen] = useState(false);
   const [modelToPull, setModelToPull] = useState('');
   const [showRecommended, setShowRecommended] = useState(true);
+  const [showWebLLMWarning, setShowWebLLMWarning] = useState(false);
   const ollama = useOllama();
   const llamacpp = useLlamaCpp();
+
+  const handleBackendChange = (backend: LLMBackend) => {
+    // Show warning when trying to use WebLLM on desktop
+    if (backend === 'webllm' && isElectron) {
+      setShowWebLLMWarning(true);
+      onBackendChange(backend); // Still switch to WebLLM
+      return;
+    }
+    onBackendChange(backend);
+  };
 
   const formatBytes = (bytes: number) => {
     if (bytes === 0) return '0 B';
@@ -80,7 +94,7 @@ export default function BackendSelector({ currentBackend, onBackendChange }: Bac
               <Button
                 variant={currentBackend === 'webllm' ? 'default' : 'outline'}
                 className="h-auto py-4 flex flex-col items-start gap-2"
-                onClick={() => onBackendChange('webllm')}
+                onClick={() => handleBackendChange('webllm')}
               >
                 <div className="flex items-center gap-2 w-full">
                   <span className="font-semibold">WebLLM</span>
@@ -94,7 +108,7 @@ export default function BackendSelector({ currentBackend, onBackendChange }: Bac
               <Button
                 variant={currentBackend === 'ollama' ? 'default' : 'outline'}
                 className="h-auto py-4 flex flex-col items-start gap-2"
-                onClick={() => onBackendChange('ollama')}
+                onClick={() => handleBackendChange('ollama')}
                 disabled={!ollama.isAvailable}
               >
                 <div className="flex items-center gap-2 w-full">
@@ -111,7 +125,7 @@ export default function BackendSelector({ currentBackend, onBackendChange }: Bac
               <Button
                 variant={currentBackend === 'llamacpp' ? 'default' : 'outline'}
                 className="h-auto py-4 flex flex-col items-start gap-2"
-                onClick={() => onBackendChange('llamacpp')}
+                onClick={() => handleBackendChange('llamacpp')}
                 disabled={!llamacpp.isAvailable}
               >
                 <div className="flex items-center gap-2 w-full">
@@ -133,6 +147,58 @@ export default function BackendSelector({ currentBackend, onBackendChange }: Bac
               <p className="text-sm text-muted-foreground">
                 Models are downloaded and run directly in your browser using WebGPU acceleration.
               </p>
+
+              {/* WebLLM Warning for Desktop */}
+              {showWebLLMWarning && isElectron && (
+                <div className="space-y-3 border rounded-lg p-4 bg-yellow-50 dark:bg-yellow-950 border-yellow-300 dark:border-yellow-700">
+                  <div className="flex items-start gap-3">
+                    <div className="text-yellow-600 dark:text-yellow-400">⚠️</div>
+                    <div className="flex-1 space-y-2">
+                      <h4 className="font-semibold text-yellow-900 dark:text-yellow-100">
+                        WebLLM Not Recommended on Desktop
+                      </h4>
+                      <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                        WebLLM is designed for browsers and may not work properly on desktop. 
+                        For the best experience, we recommend:
+                      </p>
+                      <ul className="text-sm text-yellow-800 dark:text-yellow-200 list-disc list-inside space-y-1">
+                        <li><strong>Use Ollama or llama.cpp</strong> for native performance</li>
+                        <li><strong>Visit the web version</strong> for WebLLM support</li>
+                      </ul>
+                      <div className="flex gap-2 mt-3">
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="gap-2"
+                          onClick={() => {
+                            window.open('https://omnibot.chat', '_blank');
+                          }}
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          Open omnibot.chat
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setShowWebLLMWarning(false);
+                            onBackendChange('webllm');
+                          }}
+                        >
+                          Use Anyway
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowWebLLMWarning(false)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

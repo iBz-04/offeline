@@ -297,6 +297,13 @@ export default function Home() {
     setIsLoading(true);
     setLoadingError(null);
 
+    // Validate backend availability
+    if (selectedBackend === 'webllm' && !webLLMHelper) {
+      setIsLoading(false);
+      setLoadingError("WebLLM is not initialized. Please refresh the page.");
+      return;
+    }
+
     // Store the current input for potential retry
     const currentInput = input;
 
@@ -365,7 +372,7 @@ export default function Home() {
             setLoadingError(errorMessage);
 
             // Don't show error message in chat if it was canceled
-            if (!errorMessage.includes("CANCELED")) {
+            if (!errorMessage?.includes?.("CANCELED")) {
               setStoredMessages((message) => [
                 ...message.slice(0, -1),
               ]);
@@ -463,11 +470,6 @@ export default function Home() {
   };
 
   const onRegenerate = async () => {
-    if (!engine) {
-      console.log("No engine available for regeneration");
-      return;
-    }
-
     // Prevent regeneration if already loading
     if (isLoading || isModelLoading) {
       console.log("Already processing, ignoring regenerate");
@@ -498,41 +500,57 @@ export default function Home() {
     setInput("");
 
     try {
-      const existingFile = localStorage.getItem(`chatFile_${chatId}`);
-      if (existingFile) {
-        const { fileText, fileType, fileName } = JSON.parse(existingFile);
+      // Handle different backends
+      if (selectedBackend === 'ollama') {
+        await generateOllamaCompletion(lastMsg.toString());
+      } else if (selectedBackend === 'llamacpp') {
+        await generateLlamaCppCompletion(lastMsg.toString());
+      } else {
+        // WebLLM backend
+        if (!engine) {
+          console.log("No WebLLM engine available for regeneration");
+          setIsLoading(false);
+          setLoadingSubmit(false);
+          setLoadingError("No model loaded. Please wait for the model to load.");
+          return;
+        }
 
-        setStoredMessages((message) => [
-          ...message.slice(0, -1),
-          { role: "assistant", content: "", isProcessingDocument: true },
-        ]);
+        const existingFile = localStorage.getItem(`chatFile_${chatId}`);
+        if (existingFile) {
+          const { fileText, fileType, fileName } = JSON.parse(existingFile);
 
-        try {
-          const qaPrompt = await webLLMHelper.processDocuments(
-            fileText,
-            fileType,
-            fileName,
-            lastMsg.toString()
-          );
-          if (!qaPrompt) {
-            throw new Error("Failed to process document");
+          setStoredMessages((message) => [
+            ...message.slice(0, -1),
+            { role: "assistant", content: "", isProcessingDocument: true },
+          ]);
+
+          try {
+            const qaPrompt = await webLLMHelper.processDocuments(
+              fileText,
+              fileType,
+              fileName,
+              lastMsg.toString()
+            );
+            if (!qaPrompt) {
+              throw new Error("Failed to process document");
+            }
+
+            setStoredMessages((message) => [
+              ...message.slice(0, -1),
+              { role: "assistant", content: "", isProcessingDocument: false },
+            ]);
+            await generateCompletion(engine, qaPrompt);
+          } catch (docError) {
+            console.error("Document processing error during regeneration:", docError);
+            setStoredMessages((message) => [
+              ...message.slice(0, -1),
+              { role: "assistant", content: "" },
+            ]);
+            await generateCompletion(engine, lastMsg.toString());
           }
-
-          setStoredMessages((message) => [
-            ...message.slice(0, -1),
-            { role: "assistant", content: "", isProcessingDocument: false },
-          ]);
-          await generateCompletion(engine, qaPrompt);
-        } catch (docError) {
-          console.error("Document processing error during regeneration:", docError);
-          setStoredMessages((message) => [
-            ...message.slice(0, -1),
-            { role: "assistant", content: "" },
-          ]);
+        } else {
           await generateCompletion(engine, lastMsg.toString());
         }
-      } else {
-        await generateCompletion(engine, lastMsg.toString());
       }
     } catch (e) {
       console.error("Regeneration error:", e);

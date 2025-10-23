@@ -4,9 +4,12 @@ import * as fs from 'fs';
 import { OllamaManager } from './ollama-manager';
 import { LlamaCppManager } from './llama-cpp-manager';
 
-if ((process as any).env.ELECTRON_DISABLE_SANDBOX) {
-  app.disableHardwareAcceleration();
-}
+// NOTE: Hardware acceleration MUST be enabled for WebLLM to work
+// WebLLM requires WebGPU which needs GPU acceleration
+// Only disable if absolutely necessary for debugging
+// if ((process as any).env.ELECTRON_DISABLE_SANDBOX) {
+//   app.disableHardwareAcceleration();
+// }
 
 let mainWindow: BrowserWindow | null = null;
 const ollamaManager = new OllamaManager();
@@ -51,6 +54,8 @@ function createWindow() {
       preload: path.join(__dirname, '..', 'preload', 'index.js'),
       contextIsolation: true,
       nodeIntegration: false,
+      // Enable WebGPU support for WebLLM
+      experimentalFeatures: true,
     },
   });
 
@@ -71,10 +76,14 @@ function createWindow() {
 }
 
 app.on('ready', () => {
+  // Enable WebGPU for WebLLM support
   try {
     app.commandLine.appendSwitch('enable-unsafe-webgpu');
+    app.commandLine.appendSwitch('enable-features', 'Vulkan');
+    // Ensure GPU process is enabled
+    app.commandLine.appendSwitch('ignore-gpu-blocklist');
   } catch (err) {
-    // ignore
+    console.error('Failed to enable WebGPU:', err);
   }
   
   ollamaManager.start().catch(err => {

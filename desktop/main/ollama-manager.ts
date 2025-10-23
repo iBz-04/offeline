@@ -115,7 +115,11 @@ export class OllamaManager extends EventEmitter {
               const completed = data.completed || 0;
               const total = data.total || 0;
               
-              if (total > 0 || data.status === 'success' || data.status.includes('pulling')) {
+              if (
+                total > 0 ||
+                data.status === 'success' ||
+                (typeof data.status === 'string' && data.status.includes('pulling'))
+              ) {
                 this.emit('pullProgress', {
                   model: modelName,
                   status: data.status,

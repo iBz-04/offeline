@@ -41,8 +41,11 @@ export default class WebLLMHelper {
   private generationAbortController: AbortController | null = null;
   private readonly MAX_RETRIES = 3;
   private readonly RETRY_DELAY_MS = 2000;
+  // Track a temporary downgrade of context window if device limits require it
+  private forcedContextWindowSize: number | null = null;
 
   public constructor(engine: webllm.MLCEngineInterface | null) {
+    // Ensure appConfig is properly initialized
     this.appConfig.useIndexedDBCache = true;
     this.engine = engine;
   }
@@ -57,6 +60,19 @@ export default class WebLLMHelper {
     return typeof navigator !== 'undefined' && "gpu" in navigator;
   }
 
+  // Try to read WebGPU device limits; returns null if unavailable
+  private async getMaxStorageBuffersPerShaderStage(): Promise<number | null> {
+    try {
+      if (!this.hasGPU()) return null;
+      // Some TS environments may not have WebGPU types; cast to any to avoid type errors
+      const adapter: any = await (navigator as any).gpu.requestAdapter?.();
+      const limit: number | undefined = adapter?.limits?.maxStorageBuffersPerShaderStage;
+      return typeof limit === 'number' ? limit : null;
+    } catch {
+      return null;
+    }
+  }
+
   // Initialize progress callback with cancellation support
   private initProgressCallback = (report: webllm.InitProgressReport) => {
     // Check if loading was canceled
@@ -68,7 +84,7 @@ export default class WebLLMHelper {
     
     if (typeof report.progress === 'number') {
       progress = Math.round(report.progress * 100);
-    } else {
+    } else if (report.text) {
       // Fallback: parse from text if progress field doesn't exist
       const progressMatch = report.text.match(/(\d+)%/);
       if (progressMatch) {
@@ -89,7 +105,7 @@ export default class WebLLMHelper {
       },
     ]);
 
-    if (report.text.includes("Finish loading") || progress >= 100) {
+    if (report.text?.includes("Finish loading") || progress >= 100) {
       this.setStoredMessages((message) => [
         ...message.slice(0, -1),
         { role: "assistant", content: "" },
@@ -127,11 +143,15 @@ export default class WebLLMHelper {
       throw new Error(ModelLoadError.CANCELED);
     }
 
-    const inferenceSettings = useChatStore.getState().inferenceSettings;
+  const inferenceSettings = useChatStore.getState().inferenceSettings;
     
     // Vision models need larger context window for image embeddings
     const isVisionModel = selectedModel?.name?.toLowerCase()?.includes('vision') ?? false;
-    const contextWindowSize = isVisionModel ? 8192 : inferenceSettings.contextWindowSize;
+    // Use either the user setting, vision default, or a previously forced lower window size
+    const baseCws = isVisionModel ? 8192 : inferenceSettings.contextWindowSize;
+    const contextWindowSize = this.forcedContextWindowSize
+      ? Math.min(baseCws, this.forcedContextWindowSize)
+      : baseCws;
 
     const chatOpts = {
       context_window_size: contextWindowSize,
@@ -211,6 +231,22 @@ export default class WebLLMHelper {
     // Try to load the model with retries
     let lastError: Error | null = null;
     
+    // Before trying, check device limits and proactively cap context window for very low limits
+    const maxSSBO = await this.getMaxStorageBuffersPerShaderStage();
+    if (typeof maxSSBO === 'number' && maxSSBO <= 8) {
+      // On devices with strict limits, start with a safer window size
+      // Try 2048 first; we may reduce further on specific errors
+      this.forcedContextWindowSize = 2048;
+      this.setStoredMessages((message) => [
+        ...message.slice(0, -1),
+        {
+          role: "assistant",
+          content: "Detected a GPU with strict WebGPU limits. Optimizing settings for compatibility (reduced context window).",
+          loadingProgress: 0,
+        },
+      ]);
+    }
+
     for (let attempt = 0; attempt <= this.MAX_RETRIES; attempt++) {
       try {
         this.loadState.retryCount = attempt;
@@ -228,6 +264,29 @@ export default class WebLLMHelper {
         
       } catch (error) {
         lastError = error as Error;
+
+        // Handle specific WebGPU limit errors by reducing context window and retrying immediately
+        const msg = (lastError?.message || "").toLowerCase();
+        const isSSBOLimit = msg.includes("maxstoragebufferspershaderstage") || msg.includes("max storage buffers per shader stage");
+        if (isSSBOLimit) {
+          // Reduce context window progressively to fit devices with tight limits
+          const current = this.forcedContextWindowSize ?? useChatStore.getState().inferenceSettings.contextWindowSize;
+          const next = current > 2048 ? 2048 : current > 1024 ? 1024 : current > 512 ? 512 : 0;
+          if (next >= 512 && next < current) {
+            this.forcedContextWindowSize = next;
+            this.setStoredMessages((message) => [
+              ...message.slice(0, -1),
+              {
+                role: "assistant",
+                content: `Your GPU driver has a storage buffer limit. Retrying with a smaller context window (${next}).`,
+                loadingProgress: 0,
+              },
+            ]);
+            // Immediate retry without counting towards MAX_RETRIES
+            attempt--; // neutralize this attempt since we'll retry with adjusted settings
+            continue;
+          }
+        }
         
         // Check if canceled
         if (this.abortController?.signal.aborted || lastError.message === ModelLoadError.CANCELED) {
@@ -291,12 +350,19 @@ export default class WebLLMHelper {
       return "❌ Failed to load model: No internet connection detected. Please check your connection and try again. If the model was previously cached, it should work offline.";
     }
 
-    if (error.message.includes("fetch") || error.message.includes("network")) {
+    const errorMessage = error.message || '';
+
+    if (errorMessage.includes("fetch") || errorMessage.includes("network")) {
       return "❌ Failed to load model: Network error. Please check your internet connection and try again.";
     }
 
-    if (error.message.includes("cache") || error.message.includes("IndexedDB")) {
+    if (errorMessage.includes("cache") || errorMessage.includes("IndexedDB")) {
       return "❌ Failed to load model: Cache error. Try clearing your browser cache or using incognito mode.";
+    }
+
+    // Special hint for WebGPU storage buffer limit issues
+    if (errorMessage.toLowerCase().includes("maxstoragebufferspershaderstage") || errorMessage.toLowerCase().includes("max storage buffers per shader stage")) {
+      return "❌ Your GPU's WebGPU limit was exceeded by this model's default settings. Try: 1) Reducing the context window in Inference Settings, 2) Choosing a smaller model (e.g., Omni Nano), or 3) Switching backend to Ollama/llama.cpp on desktop.";
     }
 
     return `❌ Failed to load model: ${error.message}. Please try a different model or refresh the page.`;

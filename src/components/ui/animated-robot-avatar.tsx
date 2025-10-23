@@ -15,7 +15,7 @@ export function AnimatedRobotAvatar({ className }: { className?: string }) {
       <div className={cn(
         "absolute inset-0 bg-gradient-to-tr from-purple-500/20 to-transparent rounded-full",
         "transition-opacity duration-300",
-        className?.includes("animate-pulse") ? "animate-gradient opacity-100" : "opacity-0"
+        className?.includes?.("animate-pulse") ? "animate-gradient opacity-100" : "opacity-0"
       )} />
     </div>
   );
