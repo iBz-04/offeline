@@ -127,7 +127,16 @@ export default function BackendSelector({ currentBackend, onBackendChange }: Bac
             </div>
           </div>
 
-          {ollama.isAvailable && (
+          {currentBackend === 'webllm' && (
+            <div className="space-y-3 border-t pt-4">
+              <h3 className="font-semibold">WebLLM</h3>
+              <p className="text-sm text-muted-foreground">
+                Models are downloaded and run directly in your browser using WebGPU acceleration.
+              </p>
+            </div>
+          )}
+
+          {ollama.isAvailable && currentBackend === 'ollama' && (
             <div className="space-y-3 border-t pt-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold">Ollama Status</h3>
@@ -309,7 +318,7 @@ export default function BackendSelector({ currentBackend, onBackendChange }: Bac
             </div>
           )}
 
-          {llamacpp.isAvailable && (
+          {llamacpp.isAvailable && currentBackend === 'llamacpp' && (
             <div className="space-y-3 border-t pt-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold">llama.cpp Status</h3>
