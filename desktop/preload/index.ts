@@ -38,4 +38,37 @@ contextBridge.exposeInMainWorld('omnibotAPI', {
       return () => ipcRenderer.removeAllListeners('ollama:chatToken');
     },
   },
+
+  llamacpp: {
+    initialize: () => ipcRenderer.invoke('llamacpp:initialize'),
+    setOptions: (opts: {
+      gpu?: 'auto' | 'cuda' | 'vulkan' | 'metal' | false;
+      build?: 'auto' | 'never' | 'try' | 'forceRebuild';
+      debug?: boolean;
+      maxThreads?: number;
+      reinitialize?: boolean;
+    }) => ipcRenderer.invoke('llamacpp:setOptions', opts),
+    listModels: () => ipcRenderer.invoke('llamacpp:listModels'),
+    loadModel: (modelPath: string) => ipcRenderer.invoke('llamacpp:loadModel', modelPath),
+    unloadModel: () => ipcRenderer.invoke('llamacpp:unloadModel'),
+    chat: (messages: any[]) => ipcRenderer.invoke('llamacpp:chat', { messages }),
+    chatWithSchema: (messages: any[], schema: any) => ipcRenderer.invoke('llamacpp:chatWithSchema', { messages, schema }),
+    getEmbedding: (text: string) => ipcRenderer.invoke('llamacpp:getEmbedding', text),
+    getModelsDirectory: () => ipcRenderer.invoke('llamacpp:getModelsDirectory'),
+    getCurrentModel: () => ipcRenderer.invoke('llamacpp:getCurrentModel'),
+    isModelLoaded: () => ipcRenderer.invoke('llamacpp:isModelLoaded'),
+
+    onReady: (callback: () => void) => {
+      ipcRenderer.on('llamacpp:ready', callback);
+      return () => ipcRenderer.removeListener('llamacpp:ready', callback);
+    },
+    onModelLoaded: (callback: (modelPath: string) => void) => {
+      ipcRenderer.on('llamacpp:modelLoaded', (_event, modelPath) => callback(modelPath));
+      return () => ipcRenderer.removeAllListeners('llamacpp:modelLoaded');
+    },
+    onChatToken: (callback: (token: string) => void) => {
+      ipcRenderer.on('llamacpp:chatToken', (_event, token) => callback(token));
+      return () => ipcRenderer.removeAllListeners('llamacpp:chatToken');
+    },
+  },
 });

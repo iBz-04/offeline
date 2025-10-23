@@ -2,6 +2,7 @@
   "name": "omnibot-desktop",
   "version": "0.0.0",
   "private": true,
+  "type": "commonjs",
   "main": "dist/main/index.js",
   "scripts": {
     "build": "tsc",
@@ -11,13 +12,14 @@
     "postinstall": "electron-builder install-app-deps"
   },
   "devDependencies": {
+    "@types/node": "^20.0.0",
     "cross-env": "^7.0.3",
     "electron": "^26.1.0",
     "electron-builder": "^24.0.0",
-    "typescript": "^5.5.0",
-    "@types/node": "^20.0.0"
+    "typescript": "^5.5.0"
   },
   "dependencies": {
-    "axios": "^1.6.0"
+    "axios": "^1.6.0",
+    "node-llama-cpp": "^3.14.0"
   }
 }

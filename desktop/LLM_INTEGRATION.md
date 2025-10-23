@@ -233,7 +233,6 @@ Add to `desktop/preload/index.ts`:
 
 ```typescript
 contextBridge.exposeInMainWorld('omnibotAPI', {
-  // ... existing APIs
   ollama: {
     listModels: () => ipcRenderer.invoke('ollama:listModels'),
     pullModel: (modelName: string) => ipcRenderer.invoke('ollama:pullModel', modelName),
@@ -281,7 +280,6 @@ export const OllamaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [currentModel, setCurrentModel] = useState<string | null>(null);
   
   useEffect(() => {
-    // Check if Ollama is available (desktop only)
     if (typeof window !== 'undefined' && window.omnibotAPI?.ollama) {
       setIsAvailable(true);
       loadModels();
@@ -400,6 +398,39 @@ export class LlamaManager {
 - **CUDA** (NVIDIA): Requires CUDA-enabled prebuilt binary or build from source
 - **Vulkan**: Supported via build flags
 - **CPU**: Optimized with SIMD instructions
+
+### Choosing the GPU backend at runtime (env vars)
+
+In the desktop app, you can select the llama.cpp backend without changing code by setting environment variables before starting Electron:
+
+- `LLAMA_GPU`: `auto` | `cuda` | `vulkan` | `metal` | `false` (or `off`/`none`/`disable`).
+  - Default is smart `auto`: on Windows prefers CUDA if available, then Vulkan; on macOS prefers Metal; otherwise CPU.
+- `LLAMA_BUILD`: `auto` | `never` | `try` | `forceRebuild` (default on Electron is `never`).
+- `LLAMA_DEBUG`: `1`/`true` to enable verbose native logs.
+- `LLAMA_MAX_THREADS`: integer; `0` means no limit.
+
+Examples (PowerShell on Windows):
+
+```powershell
+# Force CUDA backend
+$env:LLAMA_GPU = "cuda"; pnpm -C desktop run electron:dev
+
+# Use Vulkan (if Vulkan runtime/drivers are installed)
+$env:LLAMA_GPU = "vulkan"; pnpm -C desktop run electron:dev
+
+# CPU only (silences GPU binding warnings)
+$env:LLAMA_GPU = "false"; pnpm -C desktop run electron:dev
+
+# Try to build from source when prebuilt doesn't match (requires toolchain)
+$env:LLAMA_BUILD = "try"; pnpm -C desktop run electron:dev
+
+# Extra troubleshooting
+$env:LLAMA_DEBUG = "1"; $env:LLAMA_GPU = "auto"; pnpm -C desktop run electron:dev
+```
+
+Notes:
+- If a GPU binding self-test fails, node-llama-cpp will fall back to CPU. Enabling `LLAMA_DEBUG=1` prints native logs to help diagnose missing drivers (e.g., Vulkan runtime).
+- On Electron, prebuilt binaries must match Electron's Node-ABI. If not, consider rebuilding native modules for Electron or using `LLAMA_BUILD=try` during development (requires Visual Studio Build Tools + CMake on Windows).
 
 ---
 

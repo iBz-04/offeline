@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import { OllamaManager } from './ollama-manager';
+import { LlamaCppManager } from './llama-cpp-manager';
 
 if ((process as any).env.ELECTRON_DISABLE_SANDBOX) {
   app.disableHardwareAcceleration();
@@ -9,6 +10,7 @@ if ((process as any).env.ELECTRON_DISABLE_SANDBOX) {
 
 let mainWindow: BrowserWindow | null = null;
 const ollamaManager = new OllamaManager();
+const llamaCppManager = new LlamaCppManager();
 
 ollamaManager.on('ready', () => {
   mainWindow?.webContents.send('ollama:ready');
@@ -28,6 +30,14 @@ ollamaManager.on('pullProgress', (progress: any) => {
 
 ollamaManager.on('chatToken', (token: string) => {
   mainWindow?.webContents.send('ollama:chatToken', token);
+});
+
+llamaCppManager.on('ready', () => {
+  mainWindow?.webContents.send('llamacpp:ready');
+});
+
+llamaCppManager.on('modelLoaded', (modelPath: string) => {
+  mainWindow?.webContents.send('llamacpp:modelLoaded', modelPath);
 });
 
 function createWindow() {
@@ -80,6 +90,7 @@ app.on('window-all-closed', () => {
 
 app.on('before-quit', async () => {
   await ollamaManager.stop();
+  await llamaCppManager.dispose();
 });
 
 app.on('activate', () => {
@@ -128,4 +139,58 @@ ipcMain.handle('ollama:chat', async (_event, { model, messages }) => {
 
 ipcMain.handle('ollama:showModelInfo', async (_event, modelName: string) => {
   return await ollamaManager.showModelInfo(modelName);
+});
+
+ipcMain.handle('llamacpp:initialize', async () => {
+  await llamaCppManager.initialize();
+});
+
+ipcMain.handle('llamacpp:setOptions', async (_event, opts: {
+  gpu?: 'auto' | 'cuda' | 'vulkan' | 'metal' | false;
+  build?: 'auto' | 'never' | 'try' | 'forceRebuild';
+  debug?: boolean;
+  maxThreads?: number;
+  reinitialize?: boolean;
+}) => {
+  await llamaCppManager.setOptions(opts);
+});
+
+ipcMain.handle('llamacpp:listModels', async () => {
+  return await llamaCppManager.listModels();
+});
+
+ipcMain.handle('llamacpp:loadModel', async (_event, modelPath: string) => {
+  await llamaCppManager.loadModel(modelPath);
+});
+
+ipcMain.handle('llamacpp:unloadModel', async () => {
+  await llamaCppManager.unloadModel();
+});
+
+ipcMain.handle('llamacpp:chat', async (_event, { messages }) => {
+  return await llamaCppManager.chat(messages, (token: string) => {
+    mainWindow?.webContents.send('llamacpp:chatToken', token);
+  });
+});
+
+ipcMain.handle('llamacpp:chatWithSchema', async (_event, { messages, schema }) => {
+  return await llamaCppManager.chatWithSchema(messages, schema, (token: string) => {
+    mainWindow?.webContents.send('llamacpp:chatToken', token);
+  });
+});
+
+ipcMain.handle('llamacpp:getEmbedding', async (_event, text: string) => {
+  return await llamaCppManager.getEmbedding(text);
+});
+
+ipcMain.handle('llamacpp:getModelsDirectory', () => {
+  return llamaCppManager.getModelsDirectory();
+});
+
+ipcMain.handle('llamacpp:getCurrentModel', () => {
+  return llamaCppManager.getCurrentModel();
+});
+
+ipcMain.handle('llamacpp:isModelLoaded', () => {
+  return llamaCppManager.isModelLoaded();
 });
