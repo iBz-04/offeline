@@ -19,6 +19,7 @@ import UsernameForm from "@/components/username-form";
 import useMemoryStore from "@/hooks/useMemoryStore";
 import { MessageWithFiles } from "@/lib/types";
 import { useRouter, useSearchParams } from "next/navigation";
+import { performWebSearch, formatSearchContextForAI } from "@/lib/search-helper";
 
 export default function Home() {
   const [open, setOpen] = useState(false);
@@ -138,14 +139,23 @@ export default function Home() {
 
   const generateCompletion = async (
     loadedEngine: webllm.MLCEngineInterface,
-    prompt: string
+    prompt: string,
+    useTools: boolean = false
   ) => {
-    const completion = webLLMHelper.generateCompletion(
-      loadedEngine,
-      prompt,
-      customizedInstructions,
-      isCustomizedInstructionsEnabled
-    );
+    const completion = useTools 
+      ? webLLMHelper.generateCompletionWithTools(
+          loadedEngine,
+          prompt,
+          customizedInstructions,
+          isCustomizedInstructionsEnabled,
+          true
+        )
+      : webLLMHelper.generateCompletion(
+          loadedEngine,
+          prompt,
+          customizedInstructions,
+          isCustomizedInstructionsEnabled
+        );
 
     let assistantMessage = "";
     let firstChunk = true;
@@ -204,10 +214,21 @@ export default function Home() {
 
     messages.push({ role: "user", content: prompt });
 
+    let systemContent = "";
     if (isCustomizedInstructionsEnabled && customizedInstructions) {
+      systemContent = customizedInstructions;
+    }
+    
+    // Add web search capability notice if search results are included
+    if (prompt.includes("[SYSTEM: You have access to real-time web search results")) {
+      const searchNotice = "You have access to real-time internet information through web search results. When search results are provided, use them to give accurate, up-to-date answers.";
+      systemContent = systemContent ? `${systemContent}\n\n${searchNotice}` : searchNotice;
+    }
+    
+    if (systemContent) {
       messages.unshift({
         role: "system",
-        content: customizedInstructions
+        content: systemContent
       });
     }
 
@@ -253,10 +274,21 @@ export default function Home() {
 
     messages.push({ role: "user", content: prompt });
 
+    let systemContent = "";
     if (isCustomizedInstructionsEnabled && customizedInstructions) {
+      systemContent = customizedInstructions;
+    }
+    
+    // Add web search capability notice if search results are included
+    if (prompt.includes("[SYSTEM: You have access to real-time web search results")) {
+      const searchNotice = "You have access to real-time internet information through web search results. When search results are provided, use them to give accurate, up-to-date answers.";
+      systemContent = systemContent ? `${systemContent}\n\n${searchNotice}` : searchNotice;
+    }
+    
+    if (systemContent) {
       messages.unshift({
         role: "system",
-        content: customizedInstructions
+        content: systemContent
       });
     }
 
@@ -345,18 +377,64 @@ export default function Home() {
     try {
       setLoadingSubmit(true);
 
+      // Manual web search trigger: @web or /web or /search
+      const manualCmdMatch = input.match(/^(@web|\/web|\/search)\s+(.+)/i);
+      const isManualSearch = !!manualCmdMatch;
+      const manualQuery = manualCmdMatch ? manualCmdMatch[2].trim() : '';
+
+      // Check if tools should be enabled (when search is enabled and model supports it)
+      const toolsEnabledBase = useChatStore.getState().toolsEnabled && useChatStore.getState().searchEnabled;
+      let toolsEnabledForThisRequest = toolsEnabledBase;
+
+      // For older approach: still do upfront search if tools not enabled
+      let searchContext = "";
+      const hasSearchResults = !toolsEnabledBase && useChatStore.getState().searchEnabled;
+
+      // If user explicitly asked to web-search, do an upfront search and disable tool-calling for this turn
+      if (isManualSearch) {
+        try {
+          // Ensure search is enabled so UI reflects searching state
+          const { setSearchEnabled } = useChatStore.getState();
+          setSearchEnabled(true);
+
+          const results = await performWebSearch(manualQuery);
+          if (results && results.length > 0) {
+            searchContext = formatSearchContextForAI(results as any);
+          }
+          // Since we injected results, avoid double-calling tools for this turn
+          toolsEnabledForThisRequest = false;
+        } catch (searchError) {
+          console.error('Manual search failed, continuing without web context:', searchError);
+        }
+      }
+      
+      if (hasSearchResults) {
+        try {
+          const searchResults = await performWebSearch(currentInput);
+          if (searchResults && searchResults.length > 0) {
+            searchContext = formatSearchContextForAI(searchResults);
+          }
+        } catch (searchError) {
+          console.error("Search failed, continuing without web context:", searchError);
+        }
+      }
+
+      const enhancedInput = searchContext 
+        ? `[SYSTEM: You have access to real-time web search results. Use the following current information to answer the user's query accurately. This information is fresh from the internet and represents the most up-to-date data available.]\n\n${searchContext}\n\n[USER QUERY]: ${currentInput}\n\n[INSTRUCTION: Answer the user's query using the web search results provided above. These are real, current search results that give you access to up-to-date information. Cite specific sources with their numbers [1], [2], etc. when referencing information.]`
+        : currentInput;
+
       if (selectedBackend === 'ollama') {
         if (!window.offlineAPI?.ollama || !ollama.isRunning || !ollama.currentModel) {
           throw new Error("Ollama is not running or no model is selected. Please check your Ollama setup.");
         }
         
-        await generateOllamaCompletion(currentInput);
+        await generateOllamaCompletion(enhancedInput);
       } else if (selectedBackend === 'llamacpp') {
         if (!window.offlineAPI?.llamacpp || !llamacpp.isModelLoaded) {
           throw new Error("llama.cpp model not loaded. Please load a model first.");
         }
         
-        await generateLlamaCppCompletion(currentInput);
+        await generateLlamaCppCompletion(enhancedInput);
       } else {
         if (!loadedEngine) {
           // Load engine with retry support
@@ -405,7 +483,7 @@ export default function Home() {
               ...message.slice(0, -1),
               { role: "assistant", content: "", isProcessingDocument: false },
             ]);
-            await generateCompletion(loadedEngine, qaPrompt);
+            await generateCompletion(loadedEngine, qaPrompt, false);
           } catch (docError) {
             console.error("Document processing error:", docError);
             setStoredMessages((message) => [
@@ -416,10 +494,10 @@ export default function Home() {
               },
               { role: "assistant", content: "" },
             ]);
-            await generateCompletion(loadedEngine, currentInput);
+            await generateCompletion(loadedEngine, enhancedInput, toolsEnabledForThisRequest);
           }
         } else {
-          await generateCompletion(loadedEngine, currentInput);
+          await generateCompletion(loadedEngine, enhancedInput, toolsEnabledForThisRequest);
         }
       }
     } catch (e) {
@@ -622,7 +700,7 @@ export default function Home() {
 
         <DialogContent className="flex flex-col space-y-4">
           <DialogHeader className="space-y-2">
-            <DialogTitle>Welcome to Offline chat!</DialogTitle>
+            <DialogTitle>Welcome to Offeline chat!</DialogTitle>
             <DialogDescription>
               Enter your name to get started. This is just to personalize your
               experience.

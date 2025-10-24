@@ -17,6 +17,7 @@ import { Models, Model } from "@/lib/models";
 import { ModelBadge } from "../ui/model-badge";
 import { InfoIcon } from "lucide-react";
 import BackendSelector from "../backend-selector";
+import SearchBackendSelector from "../search-backend-selector";
 import { useOllama } from "@/providers/ollama-provider";
 import { useLlamaCpp } from "@/providers/llama-cpp-provider";
 
@@ -192,6 +193,7 @@ export default function ChatTopbar({ chatId, stopAction }: ChatTopbarProps) {
             onBackendChange={setSelectedBackend}
           />
         )}
+        <SearchBackendSelector />
       </div>
     </div>
   );

@@ -5,6 +5,13 @@ import * as webllm from "@mlc-ai/web-llm";
 import { Model } from "./models";
 import { Document } from "langchain/document";
 import { XenovaTransformersEmbeddings, getEmbeddingsInstance } from "./embed";
+import { 
+  availableTools, 
+  executeToolCall, 
+  modelSupportsFunctionCalling,
+  ToolCall,
+  ToolResult 
+} from "./tools";
 
 // Error types for better error handling
 export enum ModelLoadError {
@@ -440,17 +447,25 @@ export default class WebLLMHelper {
     const storedMessages = useChatStore.getState().messages;
     const inferenceSettings = useChatStore.getState().inferenceSettings;
 
+    // Build system content
+    let systemContent = "You are a helpful assistant. Assist the user with their questions.";
+    
+    if (customizedInstructions && isCustomizedInstructionsEnabled) {
+      systemContent += " You are also provided with the following information from the user, keep them in mind for your responses: " + customizedInstructions;
+    }
+    
+    // Add web search capability notice if search results are included in the input
+    if (input.includes("[SYSTEM: You have access to real-time web search results")) {
+      systemContent += "\n\nIMPORTANT: You have access to real-time internet information through web search results. When search results are provided in the user's message, use them to give accurate, up-to-date answers. These are current, fresh results from the internet.";
+    }
+
     try {
       const completion = await engine.chat.completions.create({
         stream: true,
         messages: [
           {
             role: "system",
-            content:
-              customizedInstructions && isCustomizedInstructionsEnabled
-                ? "You are a helpful assistant. Assist the user with their questions. You are also provided with the following information from the user, keep them in mind for your responses: " +
-                customizedInstructions
-                : "You are a helpful assistant. Assist the user with their questions.",
+            content: systemContent,
           },
           ...storedMessages,
           { role: "user", content: input },
@@ -472,6 +487,192 @@ export default class WebLLMHelper {
           yield delta;
         }
       }
+    } catch (error) {
+      console.error("Generation error:", error);
+      throw error;
+    } finally {
+      // Clean up abort controller
+      this.generationAbortController = null;
+    }
+  }
+
+  // Generate completion with tool/function calling support
+  public async *generateCompletionWithTools(
+    engine: webllm.MLCEngineInterface,
+    input: string,
+    customizedInstructions: string,
+    isCustomizedInstructionsEnabled: boolean,
+    enableTools: boolean = false
+  ): AsyncGenerator<string> {
+    // Create new abort controller for this generation
+    this.generationAbortController = new AbortController();
+    
+    const storedMessages = useChatStore.getState().messages;
+    const inferenceSettings = useChatStore.getState().inferenceSettings;
+    const selectedModel = useChatStore.getState().selectedModel;
+
+    // Build system content
+    let systemContent = "You are a helpful assistant. Assist the user with their questions.";
+    
+    if (customizedInstructions && isCustomizedInstructionsEnabled) {
+      systemContent += " You are also provided with the following information from the user, keep them in mind for your responses: " + customizedInstructions;
+    }
+
+    // Add tool capability notice
+    if (enableTools && modelSupportsFunctionCalling(selectedModel.name)) {
+      systemContent += "\n\nYou have access to tools/functions. When you need current information or real-time data, use the appropriate tool. Always call tools when needed rather than saying you don't have access.";
+    }
+
+    const messages: any[] = [
+      { role: "system", content: systemContent },
+      ...storedMessages,
+      { role: "user", content: input },
+    ];
+
+    try {
+      const supportsTools = enableTools && modelSupportsFunctionCalling(selectedModel.name);
+      const maxIterations = 5; // Prevent infinite loops
+      let iteration = 0;
+
+      while (iteration < maxIterations) {
+        iteration++;
+
+        const completionParams: any = {
+          stream: true,
+          messages,
+          temperature: inferenceSettings.temperature,
+          top_p: inferenceSettings.topP,
+          max_tokens: inferenceSettings.maxTokens,
+        };
+
+        // Add tools if supported
+        if (supportsTools) {
+          completionParams.tools = availableTools;
+          completionParams.tool_choice = 'auto';
+        }
+
+        let completion: any;
+        let fullResponse = '';
+        let toolCalls: ToolCall[] = [];
+        let hasToolCalls = false;
+
+        // Try streaming first, fallback to non-streaming if tools cause issues
+        try {
+          completion = await engine.chat.completions.create(completionParams);
+          
+          // Check if result is iterable (streaming) or direct response
+          if (Symbol.asyncIterator in Object(completion)) {
+            // Streaming response
+            for await (const chunk of completion) {
+              // Check if generation was canceled
+              if (this.generationAbortController?.signal.aborted) {
+                console.log("Generation was canceled");
+                return;
+              }
+              
+              const delta = chunk.choices[0].delta;
+              
+              // Handle content
+              if (delta.content) {
+                fullResponse += delta.content;
+                yield delta.content;
+              }
+
+              // Handle tool calls
+              if (delta.tool_calls) {
+                hasToolCalls = true;
+                for (const toolCall of delta.tool_calls) {
+                  const index = toolCall.index || 0;
+                  if (!toolCalls[index]) {
+                    toolCalls[index] = {
+                      id: toolCall.id || `call_${Date.now()}_${index}`,
+                      type: 'function',
+                      function: { name: '', arguments: '' }
+                    };
+                  }
+                  if (toolCall.function?.name) {
+                    toolCalls[index].function.name = toolCall.function.name;
+                  }
+                  if (toolCall.function?.arguments) {
+                    toolCalls[index].function.arguments += toolCall.function.arguments;
+                  }
+                }
+              }
+            }
+          } else {
+            // Non-streaming response
+            const choice = completion.choices[0];
+            if (choice.message.content) {
+              fullResponse = choice.message.content;
+              yield fullResponse;
+            }
+            if (choice.message.tool_calls) {
+              hasToolCalls = true;
+              toolCalls = choice.message.tool_calls;
+            }
+          }
+        } catch (streamError) {
+          console.warn("Streaming with tools failed, trying non-streaming:", streamError);
+          // Fallback to non-streaming
+          completionParams.stream = false;
+          completion = await engine.chat.completions.create(completionParams);
+          const choice = completion.choices[0];
+          if (choice.message.content) {
+            fullResponse = choice.message.content;
+            yield fullResponse;
+          }
+          if (choice.message.tool_calls) {
+            hasToolCalls = true;
+            toolCalls = choice.message.tool_calls;
+          }
+        }
+
+        // If no tool calls, we're done
+        if (!hasToolCalls || toolCalls.length === 0) {
+          break;
+        }
+
+        // Execute tool calls
+        yield '\n\n🔍 *Using tools to get current information...*\n\n';
+        
+        // Add assistant message with tool calls to history
+        messages.push({
+          role: 'assistant',
+          content: fullResponse || null,
+          tool_calls: toolCalls
+        });
+
+        // Execute each tool call and add results
+        const toolResults: ToolResult[] = [];
+        for (const toolCall of toolCalls) {
+          try {
+            const result = await executeToolCall(toolCall);
+            toolResults.push(result);
+            
+            // Show which tool was called
+            yield `*Called ${toolCall.function.name}*\n`;
+          } catch (error) {
+            console.error('Tool execution error:', error);
+            toolResults.push({
+              tool_call_id: toolCall.id,
+              role: 'tool',
+              name: toolCall.function.name,
+              content: JSON.stringify({ error: 'Tool execution failed' })
+            });
+          }
+        }
+
+        // Add tool results to messages
+        for (const result of toolResults) {
+          messages.push(result);
+        }
+
+        yield '\n\n';
+
+        // Continue the conversation with tool results
+        // The next iteration will generate a response using the tool results
+      }
+
     } catch (error) {
       console.error("Generation error:", error);
       throw error;

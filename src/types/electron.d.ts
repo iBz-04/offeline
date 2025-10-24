@@ -66,6 +66,14 @@ declare global {
         close: () => Promise<void>;
         isMaximized: () => Promise<boolean>;
       };
+
+      search?: {
+        web: (query: string, maxResults?: number) => Promise<Array<{
+          title: string;
+          url: string;
+          content: string;
+        }>>;
+      };
     };
   }
 }

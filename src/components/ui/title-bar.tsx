@@ -10,7 +10,7 @@ interface TitleBarProps {
   showDragArea?: boolean;
 }
 
-export function TitleBar({ title = 'Offline', icon, showDragArea = true }: TitleBarProps) {
+export function TitleBar({ title = 'Offeline', icon, showDragArea = true }: TitleBarProps) {
   const [isMaximized, setIsMaximized] = useState(false);
 
   useEffect(() => {

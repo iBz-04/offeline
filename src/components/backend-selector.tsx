@@ -251,11 +251,11 @@ export default function BackendSelector({ currentBackend, onBackendChange }: Bac
                           size="sm"
                           className="gap-2"
                           onClick={() => {
-                            window.open('https://offline.chat', '_blank');
+                            window.open('https://offeline.com', '_blank');
                           }}
                         >
                           <ExternalLink className="w-4 h-4" />
-                          Open offline.chat
+                          Open offeline.com
                         </Button>
                         <Button
                           variant="outline"

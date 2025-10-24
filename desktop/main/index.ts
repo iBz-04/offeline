@@ -154,6 +154,10 @@ ipcMain.handle('ollama:showModelInfo', async (_event, modelName: string) => {
   return await ollamaManager.showModelInfo(modelName);
 });
 
+ipcMain.handle('search:web', async (_event, { query, maxResults }) => {
+  return await ollamaManager.search(query, maxResults || 8);
+});
+
 ipcMain.handle('llamacpp:initialize', async () => {
   await llamaCppManager.initialize();
 });

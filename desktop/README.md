@@ -47,8 +47,7 @@ This document describes the plan to build an Electron-based desktop client for O
 
 # checklist
 - [ ] **Web search:** The ability to use internet websearch (if user wants)
-- [ ] **fix empty page after chat deletion:** The ability to use internet websearch (if user wants)
-- [ ] **Document upload isnt working:** The ability to use internet websearch (if user wants)
+- [ ] **Document upload isnt working:** fix
 - [ ] **add rag, and @calling a donwloaded model:** The ability to use internet websearch (if user wants)
 
 

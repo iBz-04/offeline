@@ -83,4 +83,10 @@ contextBridge.exposeInMainWorld('offlineAPI', {
     close: () => ipcRenderer.invoke('window:close'),
     isMaximized: () => ipcRenderer.invoke('window:isMaximized'),
   },
+
+  search: {
+    web: async (query: string, maxResults?: number) => {
+      return await ipcRenderer.invoke('search:web', { query, maxResults });
+    },
+  },
 });
