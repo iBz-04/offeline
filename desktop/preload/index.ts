@@ -76,4 +76,11 @@ contextBridge.exposeInMainWorld('omnibotAPI', {
       return () => ipcRenderer.removeAllListeners('llamacpp:downloadProgress');
     },
   },
+
+  window: {
+    minimize: () => ipcRenderer.invoke('window:minimize'),
+    maximize: () => ipcRenderer.invoke('window:maximize'),
+    close: () => ipcRenderer.invoke('window:close'),
+    isMaximized: () => ipcRenderer.invoke('window:isMaximized'),
+  },
 });

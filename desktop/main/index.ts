@@ -6,7 +6,7 @@ import * as http from 'http';
 import { OllamaManager } from './ollama-manager';
 import { LlamaCppManager } from './llama-cpp-manager';
 
-// NOTE: Hardware acceleration MUST be enabled for WebLLM to work
+
 // WebLLM requires WebGPU which needs GPU acceleration
 // Only disable if absolutely necessary for debugging
 // if ((process as any).env.ELECTRON_DISABLE_SANDBOX) {
@@ -52,6 +52,8 @@ function createWindow() {
     minWidth: 800,
     minHeight: 600,
     show: false,
+    icon: path.join(__dirname, '..', '..', 'public', 'cat_logo.png'),
+    frame: false, // Remove native frame for custom styling
     webPreferences: {
       preload: path.join(__dirname, '..', 'preload', 'index.js'),
       contextIsolation: true,
@@ -286,4 +288,25 @@ ipcMain.handle('llamacpp:downloadModel', async (_event, url: string, filename: s
 
     downloadWithRedirect(url);
   });
+});
+
+// Window control IPC handlers
+ipcMain.handle('window:minimize', () => {
+  mainWindow?.minimize();
+});
+
+ipcMain.handle('window:maximize', () => {
+  if (mainWindow?.isMaximized()) {
+    mainWindow.unmaximize();
+  } else {
+    mainWindow?.maximize();
+  }
+});
+
+ipcMain.handle('window:close', () => {
+  mainWindow?.close();
+});
+
+ipcMain.handle('window:isMaximized', () => {
+  return mainWindow?.isMaximized() || false;
 });

@@ -22,10 +22,10 @@ import { useLlamaCpp } from "@/providers/llama-cpp-provider";
 
 interface ChatTopbarProps {
   chatId?: string;
-  stop: () => void;
+  stopAction: () => void;
 }
 
-export default function ChatTopbar({ chatId, stop }: ChatTopbarProps) {
+export default function ChatTopbar({ chatId, stopAction }: ChatTopbarProps) {
   const [open, setOpen] = React.useState(false);
 
   // Zustand store
@@ -51,7 +51,7 @@ export default function ChatTopbar({ chatId, stop }: ChatTopbarProps) {
           <HamburgerMenuIcon className="md:hidden w-5 h-5" />
         </SheetTrigger>
         <SheetContent side="left">
-          <Sidebar chatId={chatId || ""} isCollapsed={false} stop={stop} />
+          <Sidebar chatId={chatId || ""} isCollapsed={false} stopAction={stopAction} />
         </SheetContent>
       </Sheet>
 

@@ -136,14 +136,14 @@ export default function ChatList({
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.5 }}
-              className="relative"
+              className="relative w-64 h-64 flex items-center justify-center -mb-20"
             >
               <Image
-                src="/chatbot.png"
+                src="/cat.png"
                 alt="AI"
-                width={100}
-                height={100}
-                className="dark:invert"
+                width={280}
+                height={280}
+                className="invert dark:invert-0"
               />
               <motion.div
                 className="absolute inset-0 rounded-full bg-purple-500/20 blur-xl"
@@ -160,24 +160,13 @@ export default function ChatList({
             </motion.div>
 
             <div className="space-y-4">
-              {typeof window !== "undefined" && !window.omnibotAPI && (
-                <motion.h1
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.1 }}
-                  className="text-4xl md:text-6xl font-bold bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent"
-                >
-                  How may I assist you?
-                </motion.h1>
-              )}
-              
               <motion.p
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.2 }}
                 className="text-base md:text-lg text-muted-foreground/80 max-w-lg mx-auto"
               >
-                Chat privately with<span className="font-semibold text-purple-500"> llms</span> in your browser.
+                Chat privately with<span className="font-semibold text-purple-500"> llms</span> {typeof window !== "undefined" && window.omnibotAPI ? "on your machine." : "in your browser."}
               </motion.p>
             </div>
 

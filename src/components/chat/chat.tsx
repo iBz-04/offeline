@@ -18,8 +18,8 @@ import {
 import { Button } from "../ui/button";
 
 export default function Chat({
-  handleSubmit,
-  stop,
+  handleSubmitAction,
+  stopAction,
   chatId,
   loadingSubmit,
   isMobile,
@@ -37,23 +37,27 @@ export default function Chat({
   const [open, setOpen] = React.useState(false);
 
   return (
-    <div className="flex flex-col justify-between w-full max-w-3xl h-full  ">
-      <ChatTopbar chatId={chatId} stop={stop} />
+    <div className="flex flex-col w-full max-w-3xl h-full gap-0">
+      <div className="shrink-0">
+        <ChatTopbar chatId={chatId} stopAction={stopAction} />
+      </div>
 
-      <ChatList
-        messages={messages}
-        handleSubmit={handleSubmit}
-        loadingSubmit={loadingSubmit}
-        stop={stop}
-        isMobile={isMobile}
-        onRegenerate={onRegenerate}
-        onRetry={onRetry}
-        loadingError={loadingError}
-        isModelLoading={isModelLoading}
-      />
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <ChatList
+          messages={messages}
+          handleSubmitAction={handleSubmitAction}
+          loadingSubmit={loadingSubmit}
+          stopAction={stopAction}
+          isMobile={isMobile}
+          onRegenerate={onRegenerate}
+          onRetry={onRetry}
+          loadingError={loadingError}
+          isModelLoading={isModelLoading}
+        />
+      </div>
 
       {files && fileText && (
-        <div className="ml-6 -mt-2 relative w-fit max-w-full top-4">
+        <div className="shrink-0 ml-6 -mt-2 relative w-fit max-w-full top-4">
           <Dialog open={open} onOpenChange={setOpen}>
             <div className=" px-2 py-1.5 h-11 bg-muted-foreground/20 flex w-fit flex-col truncate gap-2 p-1 border-t border-x rounded-tl-md rounded-tr-md">
               <div className="flex text-sm">
@@ -102,15 +106,17 @@ export default function Chat({
         </div>
       )}
 
-      <ChatBottombar
-        files={files}
-        setFiles={setFiles}
-        handleSubmit={handleSubmit}
-        stop={stop}
-        messages={messages}
-        loadingError={loadingError}
-        isModelLoading={isModelLoading}
-      />
+      <div className="shrink-0">
+        <ChatBottombar
+          files={files}
+          setFiles={setFiles}
+          handleSubmitAction={handleSubmitAction}
+          stopAction={stopAction}
+          messages={messages}
+          loadingError={loadingError}
+          isModelLoading={isModelLoading}
+        />
+      </div>
     </div>
   );
 }

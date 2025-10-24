@@ -22,10 +22,10 @@ import ExportChatDialog from "../export-chat-dialog";
 
 export default function ChatLayout({
   messages,
-  stop,
+  stopAction,
   chatId,
   loadingSubmit,
-  handleSubmit,
+  handleSubmitAction,
   onRegenerate,
   onRetry,
   loadingError,
@@ -68,7 +68,7 @@ export default function ChatLayout({
   };
 
   return (
-    <div className="flex relative h-[calc(100dvh)] w-full ">
+    <div className="flex relative w-full" style={{ height: '100%' }}>
       <AnimatePresence>
         <motion.div
           key="sidebar"
@@ -77,7 +77,7 @@ export default function ChatLayout({
           transition={{ duration: 0.2, ease: "easeInOut" }}
           className="w-72 hidden md:block shrink-0"
         >
-          <Sidebar isCollapsed={isCollapsed} chatId={chatId} stop={stop} />
+          <Sidebar isCollapsed={isCollapsed} chatId={chatId} stopAction={stopAction} />
         </motion.div>
         <div
           key="divider"
@@ -130,8 +130,8 @@ export default function ChatLayout({
       <div className="h-full w-full flex flex-col items-center justify-center">
         <Chat
           messages={messages}
-          handleSubmit={handleSubmit}
-          stop={stop}
+          handleSubmitAction={handleSubmitAction}
+          stopAction={stopAction}
           chatId={chatId}
           loadingSubmit={loadingSubmit}
           onRegenerate={onRegenerate}

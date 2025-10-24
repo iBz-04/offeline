@@ -28,8 +28,8 @@ interface MergedProps extends ChatProps {
 }
 
 export default function ChatBottombar({
-  handleSubmit,
-  stop,
+  handleSubmitAction,
+  stopAction,
   files,
   setFiles,
   loadingError,
@@ -54,7 +54,7 @@ export default function ChatBottombar({
       if (isLoading) return;
 
       e.preventDefault();
-      handleSubmit(e as unknown as React.FormEvent<HTMLFormElement>);
+      handleSubmitAction(e as unknown as React.FormEvent<HTMLFormElement>);
     }
   };
 
@@ -93,7 +93,7 @@ export default function ChatBottombar({
           <div className="flex flex-col relative w-full bg-accent dark:bg-card rounded-lg">
             <div className="flex w-full">
               <form
-                onSubmit={handleSubmit}
+                onSubmit={handleSubmitAction}
                 className="w-full items-center flex relative gap-2"
               >
                 <div className="absolute flex left-3 z-10">
@@ -180,7 +180,7 @@ export default function ChatBottombar({
                       type="submit"
                       onClick={(e) => {
                         e.preventDefault();
-                        stop();
+                        stopAction();
                       }}
                     >
                       <StopIcon className="w-5 h-5  " />

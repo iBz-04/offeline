@@ -32,10 +32,10 @@ import { ChatCompletionContentPart, ChatCompletionContentPartText } from "@mlc-a
 interface SidebarProps {
   isCollapsed: boolean;
   chatId: string;
-  stop: () => void;
+  stopAction: () => void;
 }
 
-export function Sidebar({ isCollapsed, chatId, stop }: SidebarProps) {
+export function Sidebar({ isCollapsed, chatId, stopAction }: SidebarProps) {
   const [localChats, setLocalChats] = useState<
     { chatId: string; messages: MessageWithFiles[] }[]
   >([]);
@@ -64,7 +64,7 @@ export function Sidebar({ isCollapsed, chatId, stop }: SidebarProps) {
     return () => {
       window.removeEventListener("storage", handleStorageChange);
     };
-  }, []);
+  }, [chatId]);
 
   const getLocalstorageChats = (): {
     chatId: string;
@@ -179,13 +179,15 @@ export function Sidebar({ isCollapsed, chatId, stop }: SidebarProps) {
           className="flex justify-between w-full h-16 text-sm font-normal items-center shrink-0 rounded-full"
         >
           <div className="flex gap-3 items-center ">
-            <Image
-              src="/chatbot.png"
-              alt="AI"
-              width={34}
-              height={34}
-              className="dark:invert"
-            />
+            <div className="relative w-12 h-12 flex items-center justify-center -my-2">
+              <Image
+                src="/cat.png"
+                alt="AI"
+                width={64}
+                height={64}
+                className="invert dark:invert-0"
+              />
+            </div>
             New chat
           </div>
           <SquarePen size={18} className="shrink-0 w-5 h-5" />

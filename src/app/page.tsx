@@ -605,13 +605,13 @@ export default function Home() {
   };
 
   return (
-    <main className="flex h-[calc(100dvh)] flex-col items-center ">
+    <main className="flex flex-col items-center w-full" style={{ height: '100%' }}>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <ChatLayout
           key={chatId}
           messages={storedMessages}
-          handleSubmit={onSubmit}
-          stop={onStop}
+          handleSubmitAction={onSubmit}
+          stopAction={onStop}
           chatId={chatId}
           loadingSubmit={loadingSubmit}
           onRegenerate={onRegenerate}

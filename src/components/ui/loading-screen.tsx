@@ -46,11 +46,11 @@ export function LoadingScreen({ isLoading }: LoadingScreenProps) {
       <div className="flex flex-col items-center gap-4">
         {/* Simple logo */}
         <Image
-          src="/chatbot.png"
+          src="/cat.png"
           alt="AI"
           width={64}
           height={64}
-          className="dark:invert"
+          className="invert dark:invert-0"
         />
         
         {/* Loading text - retro style */}

@@ -7,12 +7,12 @@ export interface ChatLayoutProps {
 export interface ChatProps {
   chatId?: string;
   messages: Message[];
-  handleSubmit: (
+  handleSubmitAction: (
     e: React.FormEvent<HTMLFormElement>,
     chatRequestOptions?: ChatRequestOptions
   ) => void;
   loadingSubmit?: boolean;
-  stop: () => void;
+  stopAction: () => void;
   isMobile?: boolean;
   onRegenerate?: () => void;
   onRetry?: () => void;

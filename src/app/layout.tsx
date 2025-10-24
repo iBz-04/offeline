@@ -9,6 +9,7 @@ import { LlamaCppProvider } from "@/providers/llama-cpp-provider";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { Suspense } from "react";
 import { LoadingScreenWrapper } from "@/components/loading-screen-wrapper";
+import { ElectronLayoutWrapper } from "@/components/electron-layout-wrapper";
 
 import { default as fav } from "./favicon.ico";
 
@@ -93,9 +94,11 @@ export default function RootLayout({
             <OllamaProvider>
               <WebLLMProvider>
                 <ThemeProvider attribute="class" defaultTheme="system">
-                  <Suspense>
-                    {children}
-                  </Suspense>
+                  <ElectronLayoutWrapper>
+                    <Suspense>
+                      {children}
+                    </Suspense>
+                  </ElectronLayoutWrapper>
                   <Toaster position="top-right" />
                 </ThemeProvider>
               </WebLLMProvider>
