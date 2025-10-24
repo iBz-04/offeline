@@ -17,7 +17,7 @@ export function ElectronLayoutWrapper({ children }: ElectronLayoutWrapperProps) 
   }, []);
 
   if (!isElectron) {
-    return <div className="h-full w-full">{children}</div>;
+    return <div className="h-screen w-screen flex flex-col overflow-hidden">{children}</div>;
   }
 
   return (
