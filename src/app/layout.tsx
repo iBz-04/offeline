@@ -11,19 +11,11 @@ import { Suspense } from "react";
 import { LoadingScreenWrapper } from "@/components/loading-screen-wrapper";
 import { ElectronLayoutWrapper } from "@/components/electron-layout-wrapper";
 
-import { default as fav } from "./favicon.ico";
-
 const metainfo = {
-  name: "OmniBot",
-  title: "OmniBot",
+  name: "Offeline",
+  title: "Offeline",
   description: "Chat with llm models offline and in your browser",
-  url: "https://www.omnibot.chat/",
-  icons: {
-    icon: [
-      { rel: "icon", url: fav.src },
-      { rel: "icon", type: "image/png", url: "/fav-32x32.png" }
-    ],
-  },
+  url: "https://www.offeline.com",
   image: "https://res.cloudinary.com/diekemzs9/image/upload/v1732472018/dark_wljsy8.png",
 };
 
@@ -34,10 +26,10 @@ export const metadata: Metadata = {
     template: "%s - " + metainfo.name,
   },
   description: metainfo.description,
-  icons: [
-    { rel: "icon", url: "/favicon.ico" },
-    { rel: "icon", type: "image/png", url: "/fav-32x32.png" }
-  ],
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/favicon.ico",
+  },
   authors: [
     {
       name: "Ibrahim Rayamah",

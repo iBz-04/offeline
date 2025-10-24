@@ -1,6 +1,7 @@
-# OmniBot — Desktop Client (Electron) Plan
+# Offeline — Desktop Client (Electron) Plan
 
-This document describes the plan to build an Electron-based desktop client for OmniBot. It intentionally focuses on architecture, integration with the existing Next.js/React codebase, development workflow, performance/security notes, and an initial step-by-step plan. We will not start coding until you confirm the approach.
+This document describes the plan to build an Electron-based desktop client for Offeline. It intentionally focuses on architecture, integration with the existing Next.js/React codebase, development workflow, performance/security notes, and an initial step-by-step plan. We will not start coding until you confirm the approach.
+
 
 ## High-level goals
 - Reuse as much of the existing UI and logic (React components, hooks, providers) as possible.
@@ -11,8 +12,7 @@ This document describes the plan to build an Electron-based desktop client for O
 ## Why Electron (short)
 - Familiar and widely used for web → desktop apps.
 - Mature ecosystem (packagers, builders, native modules, debugging tools).
-- Good fit because OmniBot's UI is already React/Next — easiest dev DX for reuse.
-
+- Good fit because Offeline's UI is already React/Next — easiest dev DX for reuse.
 ## Constraints discovered in the codebase
 - The project is a Next 14 app (server + client components). The UI, providers and hooks are React-based and live in `src/`.
 - Important pieces to reuse: `src/components/*`, `src/components/chat/*`, `src/hooks/*`, `src/lib/*`, and providers in `src/providers` (notably `web-llm-provider`).

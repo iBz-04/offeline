@@ -1,8 +1,8 @@
 <h1 align="center">
-  OmniBot
+  Offeline
 </h1>
 
-**OMNIBOT** IS a private AI that uses WebGPU to run LLMs natively & privately in your browser, bringing you in-browser AI experience.
+**Offeline** IS a private AI that uses WebGPU to run LLMs natively & privately in your browser, bringing you in-browser AI experience.
 
 # Features
 
@@ -22,7 +22,7 @@
 
 # Aim
 
-Omnibot attempts to at bring the functionality from popular AI interfaces such as ChatGPT and Gemini into a in-browser experience.
+Offeline attempts to at bring the functionality from popular AI interfaces such as ChatGPT and Gemini into a in-browser experience.
 
 # Browser support
 
@@ -36,7 +36,7 @@ follow the steps below to run locally:
 **1. Clone the repository to a directory on your pc via command prompt:**
 
 ```
-git clone https://github.com/iBz-04/omnibot
+git clone https://github.com/iBz-04/offeline
 ```
 
 **2. Install dependencies:**
@@ -83,5 +83,5 @@ docker compose up
 
 # Credit
 
-OmniBot is built using [HuggingFace](https://huggingface.co/), open source LLMs and [LangChain](https://www.langchain.com/).
+Offeline is built using [HuggingFace](https://huggingface.co/), open source LLMs and [LangChain](https://www.langchain.com/).
 
