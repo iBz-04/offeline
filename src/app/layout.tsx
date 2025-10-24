@@ -80,7 +80,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${GeistSans.className} h-screen overflow-hidden`}>
+      <body className={`${GeistSans.className} h-screen w-screen overflow-hidden`}>
         <LoadingScreenWrapper>
           <LlamaCppProvider>
             <OllamaProvider>

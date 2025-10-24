@@ -22,7 +22,6 @@ import useSpeechToText from "@/hooks/useSpeechRecognition";
 import MultiImagePicker from "../image-embedder";
 import { Models } from "@/lib/models";
 import WebSearchToggle from "../web-search-toggle";
-import SearchBackendBadge from "../search-backend-badge";
 import InputHighlighter from "../input-highlighter";
 
 interface MergedProps extends ChatProps {
@@ -97,7 +96,7 @@ export default function ChatBottombar({
   }, [isLoading]);
 
   return (
-    <div className="p-1 flex justify-between w-full items-center gap-2">
+    <div className="p-1 pb-2 flex justify-between w-full items-center gap-2">
       <AnimatePresence initial={false}>
         <div className="w-full relative mb-2 items-center">
           <div className="flex flex-col relative w-full bg-accent dark:bg-card rounded-lg">
@@ -228,29 +227,6 @@ export default function ChatBottombar({
               </div>
             )}
             */}
-          </div>
-          <div className="w-full flex justify-between items-center px-10 md:px-0 pt-2 gap-2">
-            <div className="flex-1 flex justify-center text-center">
-              {isModelLoading ? (
-                <p className="text-xs text-blue-500 animate-pulse">
-                  Loading model... This may take a moment on first use.
-                </p>
-              ) : loadingError ? (
-                <p className="text-xs text-red-500">
-                  {loadingError}
-                </p>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  The first reply might take a long because the model is being downloaded.
-                </p>
-              )}
-            </div>
-            <SearchBackendBadge />
-          </div>
-          <div className="w-full flex justify-center text-center px-10 md:px-0 pt-1">
-            <p className="text-xs text-muted-foreground/70">
-              💡 Tip: type <span className="font-mono text-xs">@web</span> to search the web
-            </p>
           </div>
         </div>
       </AnimatePresence>

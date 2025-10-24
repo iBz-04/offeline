@@ -37,7 +37,7 @@ export default function Chat({
   const [open, setOpen] = React.useState(false);
 
   return (
-    <div className="flex flex-col w-full max-w-3xl h-full gap-0 overflow-hidden">
+    <div className="flex flex-col w-full max-w-3xl h-full gap-0 overflow-hidden pb-2">
       <div className="shrink-0">
         <ChatTopbar chatId={chatId} stopAction={stopAction} />
       </div>

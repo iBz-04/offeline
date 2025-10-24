@@ -21,12 +21,12 @@ export function ElectronLayoutWrapper({ children }: ElectronLayoutWrapperProps) 
   }
 
   return (
-    <div className="flex flex-col h-screen w-screen">
+    <div className="flex flex-col h-screen w-screen overflow-hidden">
       <TitleBar 
         title="Offeline" 
         icon={<Cat size={20} className="text-foreground" />}
       />
-      <div className="flex-1 overflow-hidden min-h-0">
+      <div className="flex-1 overflow-hidden min-h-0 flex flex-col">
         {children}
       </div>
     </div>

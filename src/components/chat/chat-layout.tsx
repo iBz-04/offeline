@@ -68,7 +68,7 @@ export default function ChatLayout({
   };
 
   return (
-    <div className="flex relative w-full h-screen">
+    <div className="flex relative w-full h-full">
       <AnimatePresence>
         <motion.div
           key="sidebar"
