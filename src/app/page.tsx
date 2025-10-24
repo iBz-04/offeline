@@ -20,6 +20,8 @@ import useMemoryStore from "@/hooks/useMemoryStore";
 import { MessageWithFiles } from "@/lib/types";
 import { useRouter, useSearchParams } from "next/navigation";
 import { performWebSearch, formatSearchContextForAI } from "@/lib/search-helper";
+import { setToastFunction } from "@/lib/tools";
+import { toast } from "sonner";
 
 export default function Home() {
   const [open, setOpen] = useState(false);
@@ -105,6 +107,17 @@ export default function Home() {
         setOpen(true);
       }
     }
+  }, []);
+
+  // Initialize toast function for tools module
+  useEffect(() => {
+    setToastFunction((message: string, type: 'error' | 'warning') => {
+      if (type === 'warning') {
+        toast.warning(message);
+      } else {
+        toast.error(message);
+      }
+    });
   }, []);
 
   // Cleanup on unmount

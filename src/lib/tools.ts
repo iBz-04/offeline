@@ -7,6 +7,19 @@ import { duckduckgoClient } from './duckduckgo';
 import { SearchResult } from './duckduckgo';
 import { tavilyClient } from './tavily';
 
+// Client-side toast notifications - will be set by client component
+let toastFn: ((message: string, type: 'error' | 'warning') => void) | null = null;
+
+export function setToastFunction(fn: (message: string, type: 'error' | 'warning') => void) {
+  toastFn = fn;
+}
+
+function showToast(message: string, type: 'error' | 'warning' = 'error') {
+  if (toastFn) {
+    toastFn(message, type);
+  }
+}
+
 export interface ToolDefinition {
   type: 'function';
   function: {
@@ -195,6 +208,11 @@ async function executeWebSearch(
         };
       } catch (err) {
         console.warn('[Web Search] Tavily failed, falling back to DuckDuckGo:', err instanceof Error ? err.message : err);
+        
+        // Show toast if Tavily key is missing
+        if (err instanceof Error && err.message.includes('API key')) {
+          showToast('Tavily API key not configured. Falling back to DuckDuckGo.', 'warning');
+        }
         // fall through to DuckDuckGo below
       }
     }

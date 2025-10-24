@@ -22,6 +22,8 @@ import useSpeechToText from "@/hooks/useSpeechRecognition";
 import MultiImagePicker from "../image-embedder";
 import { Models } from "@/lib/models";
 import WebSearchToggle from "../web-search-toggle";
+import SearchBackendBadge from "../search-backend-badge";
+import InputHighlighter from "../input-highlighter";
 
 interface MergedProps extends ChatProps {
   files: File[] | undefined;
@@ -40,6 +42,7 @@ export default function ChatBottombar({
   const handleInputChange = useChatStore((state) => state.handleInputChange);
   const inputRef = React.useRef<HTMLTextAreaElement>(null);
   const [open, setOpen] = React.useState(false);
+  const [hasWebCommand, setHasWebCommand] = React.useState(false);
 
   const isLoading = useChatStore((state) => state.isLoading);
   const fileText = useChatStore((state) => state.fileText);
@@ -48,6 +51,12 @@ export default function ChatBottombar({
   const base64Images = useChatStore((state) => state.base64Images);
   const setBase64Images = useChatStore((state) => state.setBase64Images);
   const selectedModel = useChatStore((state) => state.selectedModel);
+
+  // Detect @web command
+  React.useEffect(() => {
+    const hasCommand = /^(@web|\/web|\/search)\s+/i.test(input);
+    setHasWebCommand(hasCommand);
+  }, [input]);
 
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -111,6 +120,7 @@ export default function ChatBottombar({
                     setFiles={setFiles}
                   />
                 </div>
+                <InputHighlighter value={input} />
                 <TextareaAutosize
                   autoComplete="off"
                   value={
@@ -123,7 +133,9 @@ export default function ChatBottombar({
                   placeholder={
                     !isListening ? "Enter your prompt here" : "Listening"
                   }
-                  className=" max-h-24 px-28 bg-accent py-[22px] rounded-lg  text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 w-full flex items-center h-16 resize-none overflow-hidden dark:bg-card"
+                  className={`max-h-24 px-28 bg-accent py-[22px] rounded-lg text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 w-full flex items-center h-16 resize-none overflow-hidden dark:bg-card ${
+                    hasWebCommand ? "text-transparent caret-foreground" : ""
+                  }`}
                 />
 
                 {!isLoading ? (
@@ -217,21 +229,28 @@ export default function ChatBottombar({
             )}
             */}
           </div>
-          <div className="w-full flex justify-center text-center px-10 md:px-0">
-            {isModelLoading ? (
-              <p className="text-xs pt-2 text-blue-500 animate-pulse">
-                Loading model... This may take a moment on first use.
-              </p>
-            ) : loadingError ? (
-              <p className="text-xs pt-2 text-red-500">
-                {loadingError}
-              </p>
-            ) : (
-              <p className="text-xs pt-2 text-muted-foreground">
-                The first reply might take a long because the
-                model is being downloaded.
-              </p>
-            )}
+          <div className="w-full flex justify-between items-center px-10 md:px-0 pt-2 gap-2">
+            <div className="flex-1 flex justify-center text-center">
+              {isModelLoading ? (
+                <p className="text-xs text-blue-500 animate-pulse">
+                  Loading model... This may take a moment on first use.
+                </p>
+              ) : loadingError ? (
+                <p className="text-xs text-red-500">
+                  {loadingError}
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  The first reply might take a long because the model is being downloaded.
+                </p>
+              )}
+            </div>
+            <SearchBackendBadge />
+          </div>
+          <div className="w-full flex justify-center text-center px-10 md:px-0 pt-1">
+            <p className="text-xs text-muted-foreground/70">
+              💡 Tip: type <span className="font-mono text-xs">@web</span> to search the web
+            </p>
           </div>
         </div>
       </AnimatePresence>
