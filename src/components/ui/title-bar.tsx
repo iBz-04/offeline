@@ -10,13 +10,13 @@ interface TitleBarProps {
   showDragArea?: boolean;
 }
 
-export function TitleBar({ title = 'OmniBot', icon, showDragArea = true }: TitleBarProps) {
+export function TitleBar({ title = 'Offline', icon, showDragArea = true }: TitleBarProps) {
   const [isMaximized, setIsMaximized] = useState(false);
 
   useEffect(() => {
     const checkMaximized = async () => {
-      if (typeof window !== 'undefined' && window.omnibotAPI?.window) {
-        const maximized = await window.omnibotAPI.window.isMaximized();
+      if (typeof window !== 'undefined' && window.offlineAPI?.window) {
+        const maximized = await window.offlineAPI.window.isMaximized();
         setIsMaximized(maximized ?? false);
       }
     };
@@ -25,17 +25,17 @@ export function TitleBar({ title = 'OmniBot', icon, showDragArea = true }: Title
   }, []);
 
   const handleMinimize = async () => {
-    await window.omnibotAPI?.window?.minimize();
+    await window.offlineAPI?.window?.minimize();
   };
 
   const handleMaximize = async () => {
-    await window.omnibotAPI?.window?.maximize();
-    const maximized = await window.omnibotAPI?.window?.isMaximized();
+    await window.offlineAPI?.window?.maximize();
+    const maximized = await window.offlineAPI?.window?.isMaximized();
     setIsMaximized(maximized ?? false);
   };
 
   const handleClose = async () => {
-    await window.omnibotAPI?.window?.close();
+    await window.offlineAPI?.window?.close();
   };
 
   return (

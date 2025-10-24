@@ -166,7 +166,7 @@ export default function ChatList({
                 transition={{ delay: 0.2 }}
                 className="text-base md:text-lg text-muted-foreground/80 max-w-lg mx-auto"
               >
-                Chat privately with<span className="font-semibold text-purple-500"> llms</span> {typeof window !== "undefined" && window.omnibotAPI ? "on your machine." : "in your browser."}
+                Chat privately with<span className="font-semibold text-purple-500"> llms</span> {typeof window !== "undefined" && window.offlineAPI ? "on your machine." : "in your browser."}
               </motion.p>
             </div>
 

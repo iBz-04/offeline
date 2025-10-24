@@ -186,7 +186,7 @@ export default function ChatTopbar({ chatId, stopAction }: ChatTopbarProps) {
       
       {/* Backend Selector for Desktop - only show if running in Electron */}
       <div className="flex items-center gap-2">
-        {typeof window !== "undefined" && (window as any).omnibotAPI && (
+        {typeof window !== "undefined" && (window as any).offlineAPI && (
           <BackendSelector 
             currentBackend={selectedBackend}
             onBackendChange={setSelectedBackend}

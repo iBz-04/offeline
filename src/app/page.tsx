@@ -213,7 +213,7 @@ export default function Home() {
 
     let assistantMessage = "";
 
-    const unsubToken = window.omnibotAPI?.ollama?.onChatToken((token: string) => {
+    const unsubToken = window.offlineAPI?.ollama?.onChatToken((token: string) => {
       assistantMessage += token;
       setStoredMessages((message) => [
         ...message.slice(0, -1),
@@ -262,7 +262,7 @@ export default function Home() {
 
     let assistantMessage = "";
 
-    const unsubToken = window.omnibotAPI?.llamacpp?.onChatToken((token: string) => {
+    const unsubToken = window.offlineAPI?.llamacpp?.onChatToken((token: string) => {
       assistantMessage += token;
       setStoredMessages((message) => [
         ...message.slice(0, -1),
@@ -346,13 +346,13 @@ export default function Home() {
       setLoadingSubmit(true);
 
       if (selectedBackend === 'ollama') {
-        if (!window.omnibotAPI?.ollama || !ollama.isRunning || !ollama.currentModel) {
+        if (!window.offlineAPI?.ollama || !ollama.isRunning || !ollama.currentModel) {
           throw new Error("Ollama is not running or no model is selected. Please check your Ollama setup.");
         }
         
         await generateOllamaCompletion(currentInput);
       } else if (selectedBackend === 'llamacpp') {
-        if (!window.omnibotAPI?.llamacpp || !llamacpp.isModelLoaded) {
+        if (!window.offlineAPI?.llamacpp || !llamacpp.isModelLoaded) {
           throw new Error("llama.cpp model not loaded. Please load a model first.");
         }
         
@@ -622,7 +622,7 @@ export default function Home() {
 
         <DialogContent className="flex flex-col space-y-4">
           <DialogHeader className="space-y-2">
-            <DialogTitle>Welcome to OmniBot chat!</DialogTitle>
+            <DialogTitle>Welcome to Offline chat!</DialogTitle>
             <DialogDescription>
               Enter your name to get started. This is just to personalize your
               experience.

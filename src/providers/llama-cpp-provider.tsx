@@ -49,14 +49,14 @@ export const LlamaCppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [modelsDirectory, setModelsDirectory] = useState('');
 
   const refreshModels = useCallback(async () => {
-    if (!window.omnibotAPI?.llamacpp) return;
+    if (!window.offlineAPI?.llamacpp) return;
     
     try {
       setError(null);
-      const modelList = await window.omnibotAPI.llamacpp.listModels();
+      const modelList = await window.offlineAPI.llamacpp.listModels();
       setModels(modelList);
       
-      const loaded = await window.omnibotAPI.llamacpp.getCurrentModel();
+      const loaded = await window.offlineAPI.llamacpp.getCurrentModel();
       if (loaded) {
         setCurrentModel(loaded);
         setIsModelLoaded(true);
@@ -68,14 +68,14 @@ export const LlamaCppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   const initializeLlamaCpp = useCallback(async () => {
-    if (!window.omnibotAPI?.llamacpp) return;
+    if (!window.offlineAPI?.llamacpp) return;
     
     try {
       setLoading(true);
       setError(null);
-      await window.omnibotAPI.llamacpp.initialize();
+      await window.offlineAPI.llamacpp.initialize();
       setIsInitialized(true);
-      const dir = await window.omnibotAPI.llamacpp.getModelsDirectory();
+      const dir = await window.offlineAPI.llamacpp.getModelsDirectory();
       setModelsDirectory(dir);
       await refreshModels();
     } catch (err: any) {
@@ -87,26 +87,26 @@ export const LlamaCppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [refreshModels]);
 
   const setupEventListeners = useCallback(() => {
-    if (!window.omnibotAPI?.llamacpp) return;
+    if (!window.offlineAPI?.llamacpp) return;
 
-    window.omnibotAPI.llamacpp.onReady(() => {
+    window.offlineAPI.llamacpp.onReady(() => {
       setIsInitialized(true);
       setError(null);
     });
 
-    window.omnibotAPI.llamacpp.onModelLoaded((modelPath: string) => {
+    window.offlineAPI.llamacpp.onModelLoaded((modelPath: string) => {
       setCurrentModel(modelPath);
       setIsModelLoaded(true);
       setError(null);
     });
 
-    window.omnibotAPI.llamacpp.onChatToken((token: string) => {
+    window.offlineAPI.llamacpp.onChatToken((token: string) => {
       setChatResponse(prev => prev + token);
     });
   }, []);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.omnibotAPI?.llamacpp) {
+    if (typeof window !== 'undefined' && window.offlineAPI?.llamacpp) {
       setIsAvailable(true);
       initializeLlamaCpp();
       setupEventListeners();
@@ -114,7 +114,7 @@ export const LlamaCppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [initializeLlamaCpp, setupEventListeners]);
 
   const setModel = useCallback(async (modelPath: string) => {
-    if (!window.omnibotAPI?.llamacpp) {
+    if (!window.offlineAPI?.llamacpp) {
       throw new Error('llama.cpp not available');
     }
 
@@ -123,11 +123,11 @@ export const LlamaCppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setError(null);
       
       if (isModelLoaded) {
-        await window.omnibotAPI.llamacpp.unloadModel();
+        await window.offlineAPI.llamacpp.unloadModel();
         setIsModelLoaded(false);
       }
 
-      await window.omnibotAPI.llamacpp.loadModel(modelPath);
+      await window.offlineAPI.llamacpp.loadModel(modelPath);
       setCurrentModel(modelPath);
       setIsModelLoaded(true);
     } catch (err: any) {
@@ -139,12 +139,12 @@ export const LlamaCppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [isModelLoaded]);
 
   const unloadModel = useCallback(async () => {
-    if (!window.omnibotAPI?.llamacpp) return;
+    if (!window.offlineAPI?.llamacpp) return;
 
     try {
       setLoading(true);
       setError(null);
-      await window.omnibotAPI.llamacpp.unloadModel();
+      await window.offlineAPI.llamacpp.unloadModel();
       setCurrentModel(null);
       setIsModelLoaded(false);
     } catch (err: any) {
@@ -156,7 +156,7 @@ export const LlamaCppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   const chat = useCallback(async (messages: Array<{ role: string; content: string }>) => {
-    if (!window.omnibotAPI?.llamacpp || !isModelLoaded) {
+    if (!window.offlineAPI?.llamacpp || !isModelLoaded) {
       throw new Error('Model not loaded');
     }
 
@@ -165,7 +165,7 @@ export const LlamaCppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setError(null);
       setChatResponse('');
       
-      const response = await window.omnibotAPI.llamacpp.chat(messages);
+      const response = await window.offlineAPI.llamacpp.chat(messages);
       setChatResponse(response);
       return response;
     } catch (err: any) {
@@ -180,7 +180,7 @@ export const LlamaCppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     messages: Array<{ role: string; content: string }>,
     schema: any
   ) => {
-    if (!window.omnibotAPI?.llamacpp || !isModelLoaded) {
+    if (!window.offlineAPI?.llamacpp || !isModelLoaded) {
       throw new Error('Model not loaded');
     }
 
@@ -188,7 +188,7 @@ export const LlamaCppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setLoading(true);
       setError(null);
       
-      const response = await window.omnibotAPI.llamacpp.chatWithSchema(messages, schema);
+      const response = await window.offlineAPI.llamacpp.chatWithSchema(messages, schema);
       return response;
     } catch (err: any) {
       setError(err.message || 'Schema chat failed');
@@ -199,13 +199,13 @@ export const LlamaCppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [isModelLoaded]);
 
   const getEmbedding = useCallback(async (text: string) => {
-    if (!window.omnibotAPI?.llamacpp || !isModelLoaded) {
+    if (!window.offlineAPI?.llamacpp || !isModelLoaded) {
       throw new Error('Model not loaded');
     }
 
     try {
       setError(null);
-      const embedding = await window.omnibotAPI.llamacpp.getEmbedding(text);
+      const embedding = await window.offlineAPI.llamacpp.getEmbedding(text);
       return Array.from(embedding);
     } catch (err: any) {
       setError(err.message || 'Embedding generation failed');

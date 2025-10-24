@@ -12,7 +12,7 @@ export function ElectronLayoutWrapper({ children }: ElectronLayoutWrapperProps) 
   const [isElectron, setIsElectron] = useState(false);
 
   useEffect(() => {
-    const isRunningInElectron = typeof window !== 'undefined' && !!(window as any).omnibotAPI;
+    const isRunningInElectron = typeof window !== 'undefined' && !!(window as any).offlineAPI;
     setIsElectron(isRunningInElectron);
   }, []);
 
@@ -23,7 +23,7 @@ export function ElectronLayoutWrapper({ children }: ElectronLayoutWrapperProps) 
   return (
     <div className="flex flex-col h-screen w-screen">
       <TitleBar 
-        title="OmniBot" 
+        title="Offline" 
         icon={<Cat size={20} className="text-foreground" />}
       />
       <div className="flex-1 overflow-hidden min-h-0">

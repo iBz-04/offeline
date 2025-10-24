@@ -54,10 +54,10 @@ export const OllamaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [error, setError] = useState<string | null>(null);
 
   const refreshModels = useCallback(async () => {
-    if (!window.omnibotAPI?.ollama) return;
+    if (!window.offlineAPI?.ollama) return;
     
     try {
-      const modelList = await window.omnibotAPI.ollama.listModels();
+      const modelList = await window.offlineAPI.ollama.listModels();
       setModels(modelList);
       if (modelList.length > 0 && !currentModel) {
         setCurrentModel(modelList[0].name);
@@ -68,12 +68,12 @@ export const OllamaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [currentModel]);
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !window.omnibotAPI?.ollama) return;
+    if (typeof window === 'undefined' || !window.offlineAPI?.ollama) return;
 
     setIsAvailable(true);
 
     const checkRunning = async () => {
-      const running = await window.omnibotAPI!.ollama!.isRunning();
+      const running = await window.offlineAPI!.ollama!.isRunning();
       setIsRunning(running);
       if (running) {
         refreshModels();
@@ -82,25 +82,25 @@ export const OllamaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     checkRunning();
 
-    const unsubReady = window.omnibotAPI.ollama.onReady(() => {
+    const unsubReady = window.offlineAPI.ollama.onReady(() => {
       setIsRunning(true);
       refreshModels();
     });
 
-    const unsubError = window.omnibotAPI.ollama.onError((error) => {
+    const unsubError = window.offlineAPI.ollama.onError((error) => {
       setError(error);
       setIsRunning(false);
     });
 
-    const unsubHealth = window.omnibotAPI.ollama.onHealth((running) => {
+    const unsubHealth = window.offlineAPI.ollama.onHealth((running) => {
       setIsRunning(running);
     });
 
-    const unsubPullProgress = window.omnibotAPI.ollama.onPullProgress((progress) => {
+    const unsubPullProgress = window.offlineAPI.ollama.onPullProgress((progress) => {
       setPullProgress(progress);
     });
 
-    const unsubChatToken = window.omnibotAPI.ollama.onChatToken((token) => {
+    const unsubChatToken = window.offlineAPI.ollama.onChatToken((token) => {
       setChatResponse(prev => prev + token);
     });
 
@@ -114,12 +114,12 @@ export const OllamaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [refreshModels]);
 
   const pullModel = async (modelName: string) => {
-    if (!window.omnibotAPI?.ollama) return;
+    if (!window.offlineAPI?.ollama) return;
     
     setLoading(true);
     setError(null);
     try {
-      await window.omnibotAPI.ollama.pullModel(modelName);
+      await window.offlineAPI.ollama.pullModel(modelName);
       await refreshModels();
       // Small delay to show 100% completion before clearing
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -132,12 +132,12 @@ export const OllamaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const deleteModel = async (modelName: string) => {
-    if (!window.omnibotAPI?.ollama) return;
+    if (!window.offlineAPI?.ollama) return;
     
     setLoading(true);
     setError(null);
     try {
-      await window.omnibotAPI.ollama.deleteModel(modelName);
+      await window.offlineAPI.ollama.deleteModel(modelName);
       if (currentModel === modelName) {
         setCurrentModel(null);
       }
@@ -150,7 +150,7 @@ export const OllamaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const chat = async (messages: Array<{ role: string; content: string }>) => {
-    if (!window.omnibotAPI?.ollama || !currentModel) {
+    if (!window.offlineAPI?.ollama || !currentModel) {
       throw new Error('Ollama not available or no model selected');
     }
     
@@ -158,7 +158,7 @@ export const OllamaProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setError(null);
     
     try {
-      const response = await window.omnibotAPI.ollama.chat(currentModel, messages);
+      const response = await window.offlineAPI.ollama.chat(currentModel, messages);
       return response;
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Chat failed';

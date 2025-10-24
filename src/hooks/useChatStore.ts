@@ -60,7 +60,7 @@ interface Actions {
 
 // Helper to detect if running in Electron
 const isElectron = () => {
-  return typeof window !== 'undefined' && !!(window as any).omnibotAPI;
+  return typeof window !== 'undefined' && !!(window as any).offlineAPI;
 };
 
 // Get default backend based on environment

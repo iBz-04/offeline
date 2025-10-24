@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
-contextBridge.exposeInMainWorld('omnibotAPI', {
+contextBridge.exposeInMainWorld('offlineAPI', {
   openFile: async () => {
     return await ipcRenderer.invoke('dialog:openFile');
   },

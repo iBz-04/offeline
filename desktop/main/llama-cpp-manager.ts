@@ -33,7 +33,7 @@ export class LlamaCppManager extends EventEmitter {
 
   constructor() {
     super();
-    this.modelsDir = path.join(os.homedir(), '.omnibot', 'models');
+    this.modelsDir = path.join(os.homedir(), '.offline', 'models');
     this.ensureModelsDir();
   }
 

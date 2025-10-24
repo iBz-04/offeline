@@ -24,7 +24,7 @@ interface BackendSelectorProps {
 }
 
 // Check if running in Electron
-const isElectron = typeof window !== 'undefined' && !!(window as any).omnibotAPI;
+const isElectron = typeof window !== 'undefined' && !!(window as any).offlineAPI;
 
 const RECOMMENDED_MODELS = [
   { name: 'qwen2.5:0.5b', size: '397 MB', description: 'Ultra-fast, great for quick responses' },
@@ -76,9 +76,9 @@ export default function BackendSelector({ currentBackend, onBackendChange }: Bac
   const llamacpp = useLlamaCpp();
 
   React.useEffect(() => {
-    if (!window.omnibotAPI?.llamacpp?.onDownloadProgress) return;
+    if (!window.offlineAPI?.llamacpp?.onDownloadProgress) return;
 
-    const cleanup = window.omnibotAPI.llamacpp.onDownloadProgress((progress) => {
+    const cleanup = window.offlineAPI.llamacpp.onDownloadProgress((progress) => {
       setDownloadProgress(progress);
     });
 
@@ -90,7 +90,7 @@ export default function BackendSelector({ currentBackend, onBackendChange }: Bac
   };
 
   const handleDownloadGGUF = async (url: string, filename: string) => {
-    if (!window.omnibotAPI?.llamacpp?.downloadModel) {
+    if (!window.offlineAPI?.llamacpp?.downloadModel) {
       console.error('Download API not available');
       return;
     }
@@ -101,7 +101,7 @@ export default function BackendSelector({ currentBackend, onBackendChange }: Bac
       setDownloadingModel(filename);
       setDownloadProgress(null);
       
-      const result = await window.omnibotAPI.llamacpp.downloadModel(url, filename);
+      const result = await window.offlineAPI.llamacpp.downloadModel(url, filename);
       
       console.log('Download result:', result);
       
@@ -251,11 +251,11 @@ export default function BackendSelector({ currentBackend, onBackendChange }: Bac
                           size="sm"
                           className="gap-2"
                           onClick={() => {
-                            window.open('https://omnibot.chat', '_blank');
+                            window.open('https://offline.chat', '_blank');
                           }}
                         >
                           <ExternalLink className="w-4 h-4" />
-                          Open omnibot.chat
+                          Open offline.chat
                         </Button>
                         <Button
                           variant="outline"

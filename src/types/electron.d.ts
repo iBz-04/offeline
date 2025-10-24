@@ -2,7 +2,7 @@ export {};
 
 declare global {
   interface Window {
-    omnibotAPI?: {
+    offlineAPI?: {
       openFile: () => Promise<{ path: string; content: string } | null>;
       saveFile: (opts: { fileName: string; data: string }) => Promise<{ ok: boolean; path?: string }>;
       openDevTools: () => void;
