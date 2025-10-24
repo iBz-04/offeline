@@ -12,13 +12,12 @@ export function ElectronLayoutWrapper({ children }: ElectronLayoutWrapperProps) 
   const [isElectron, setIsElectron] = useState(false);
 
   useEffect(() => {
-    // Check if running in Electron
     const isRunningInElectron = typeof window !== 'undefined' && !!(window as any).omnibotAPI;
     setIsElectron(isRunningInElectron);
   }, []);
 
   if (!isElectron) {
-    return <>{children}</>;
+    return <div className="h-full w-full">{children}</div>;
   }
 
   return (

@@ -68,14 +68,14 @@ export default function ChatLayout({
   };
 
   return (
-    <div className="flex relative w-full" style={{ height: '100%' }}>
+    <div className="flex relative w-full h-screen">
       <AnimatePresence>
         <motion.div
           key="sidebar"
           animate={{ width: isCollapsed ? 0 : 288 }}
           exit={{ width: 0 }}
           transition={{ duration: 0.2, ease: "easeInOut" }}
-          className="w-72 hidden md:block shrink-0"
+          className="w-72 hidden md:block shrink-0 h-full"
         >
           <Sidebar isCollapsed={isCollapsed} chatId={chatId} stopAction={stopAction} />
         </motion.div>
@@ -127,7 +127,7 @@ export default function ChatLayout({
           </motion.div>
         </div>
       </AnimatePresence>
-      <div className="h-full w-full flex flex-col items-center justify-center">
+      <div className="h-full w-full flex flex-col items-center justify-center overflow-hidden">
         <Chat
           messages={messages}
           handleSubmitAction={handleSubmitAction}
@@ -140,7 +140,6 @@ export default function ChatLayout({
           isModelLoading={isModelLoading}
         />
 
-        {/* Export chat button */}
         <ExportChatDialog open={open} setOpen={setOpen} />
       </div>
     </div>

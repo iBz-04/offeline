@@ -605,7 +605,7 @@ export default function Home() {
   };
 
   return (
-    <main className="flex flex-col items-center w-full" style={{ height: '100%' }}>
+    <main className="flex flex-col items-center w-full h-full">
       <Dialog open={open} onOpenChange={onOpenChange}>
         <ChatLayout
           key={chatId}
@@ -620,7 +620,6 @@ export default function Home() {
           isModelLoading={isModelLoading}
         />
 
-        {/* This only shows first time using the app */}
         <DialogContent className="flex flex-col space-y-4">
           <DialogHeader className="space-y-2">
             <DialogTitle>Welcome to OmniBot chat!</DialogTitle>
