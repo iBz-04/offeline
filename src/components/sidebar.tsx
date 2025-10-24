@@ -48,6 +48,7 @@ export function Sidebar({ isCollapsed, chatId, stopAction }: SidebarProps) {
   const [chatTitle, setChatTitle] = useState<string>("");
   const [open, setOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState<string | null>(null);
 
   const router = useRouter();
 
@@ -228,7 +229,7 @@ export function Sidebar({ isCollapsed, chatId, stopAction }: SidebarProps) {
                   </Link>
 
                   <div className="absolute right-2" key="dropdown">
-                    <DropdownMenu>
+                    <DropdownMenu open={dropdownOpen === chatId} onOpenChange={(isOpen) => setDropdownOpen(isOpen ? chatId : null)}>
                       <DropdownMenuTrigger asChild>
                         <Button
                           variant="ghost"
@@ -238,74 +239,86 @@ export function Sidebar({ isCollapsed, chatId, stopAction }: SidebarProps) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent className=" ">
-                        <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
-                          <DialogTrigger>
-                            <Button onClick={() => handleRenameFill(chatId)} variant="ghost" className="w-full flex gap-2 hover:text-black text-black dark:text-white justify-start items-center">
-                              <div className="flex justify-end gap-2">
-                                <Pencil className="shrink-0 w-4 h-4" />
-                                Rename chat
-                              </div>
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader className="space-y-4">
-                              <DialogTitle>Rename this chat</DialogTitle>
-                              <div className="flex justify-end gap-2">
-                                <Input
-                                  defaultValue={chatTitle}
-                                  placeholder="Enter your chat name"
-                                  onChange={(e) => setChatTitle(e.target.value)}
-                                />
-                                <Button variant="outline" onClick={() => setRenameOpen(false)}>
-                                  Cancel
-                                </Button>
-                                <Button onClick={() => { setRenameOpen(false); handleRenameChat(chatId) }}>
-                                  Rename
-                                </Button>
-                              </div>
-                            </DialogHeader>
-                          </DialogContent>
-                        </Dialog>
+                        <Button 
+                          onClick={() => { 
+                            handleRenameFill(chatId); 
+                            setDropdownOpen(null); 
+                            setRenameOpen(true); 
+                          }} 
+                          variant="ghost" 
+                          className="w-full flex gap-2 hover:text-black text-black dark:text-white justify-start items-center"
+                        >
+                          <div className="flex justify-end gap-2">
+                            <Pencil className="shrink-0 w-4 h-4" />
+                            Rename chat
+                          </div>
+                        </Button>
 
-                        <Dialog open={open} onOpenChange={setOpen}>
-                          <DialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              className="w-full flex gap-2 hover:text-red-500 text-red-500 justify-start items-center"
-                            >
-                              <Trash2 className="shrink-0 w-4 h-4" />
-                              Delete chat
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader className="space-y-4">
-                              <DialogTitle>Delete chat?</DialogTitle>
-                              <DialogDescription>
-                                Are you sure you want to delete this chat? This
-                                action cannot be undone.
-                              </DialogDescription>
-                              <div className="flex justify-end gap-2">
-                                <Button
-                                  variant="outline"
-                                  onClick={() => setOpen(false)}
-                                >
-                                  Cancel
-                                </Button>
-                                <Button
-                                  variant="destructive"
-                                  onClick={() => {
-                                    handleDeleteChat(chatId);
-                                    setOpen(false);
-                                  }}
-                                >
-                                  Delete
-                                </Button>
-                              </div>
-                            </DialogHeader>
-                          </DialogContent>
-                        </Dialog>
+                        <Button
+                          onClick={() => { 
+                            setDropdownOpen(null); 
+                            setOpen(true); 
+                          }}
+                          variant="ghost"
+                          className="w-full flex gap-2 hover:text-red-500 text-red-500 justify-start items-center"
+                        >
+                          <Trash2 className="shrink-0 w-4 h-4" />
+                          Delete chat
+                        </Button>
                       </DropdownMenuContent>
                     </DropdownMenu>
+
+                    {/* Rename Dialog */}
+                    <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
+                      <DialogContent>
+                        <DialogHeader className="space-y-4">
+                          <DialogTitle>Rename this chat</DialogTitle>
+                          <div className="flex justify-end gap-2">
+                            <Input
+                              defaultValue={chatTitle}
+                              placeholder="Enter your chat name"
+                              onChange={(e) => setChatTitle(e.target.value)}
+                            />
+                            <Button variant="outline" onClick={() => setRenameOpen(false)}>
+                              Cancel
+                            </Button>
+                            <Button onClick={() => { setRenameOpen(false); handleRenameChat(chatId) }}>
+                              Rename
+                            </Button>
+                          </div>
+                        </DialogHeader>
+                      </DialogContent>
+                    </Dialog>
+
+                    {/* Delete Dialog */}
+                    <Dialog open={open} onOpenChange={setOpen}>
+                      <DialogContent>
+                        <DialogHeader className="space-y-4">
+                          <DialogTitle>Delete chat?</DialogTitle>
+                          <DialogDescription>
+                            Are you sure you want to delete this chat? This
+                            action cannot be undone.
+                          </DialogDescription>
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              onClick={() => setOpen(false)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              onClick={() => {
+                                handleDeleteChat(chatId);
+                                setOpen(false);
+                              }}
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        </DialogHeader>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </div>
               ))}
