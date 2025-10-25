@@ -1,87 +1,320 @@
-<h1 align="center">
-  Offeline
-</h1>
+# Omnibot
 
-**Offeline** IS a private AI that uses WebGPU to run LLMs natively & privately in your browser, bringing you in-browser AI experience.
+**Omnibot** is a powerful, privacy-first AI chat application with both browser and desktop support. Run open-source LLMs locally on your hardware with multiple backend options—choose between WebGPU for browser-based inference, Ollama, or llama.cpp for desktop environments. Your data never leaves your machine.
 
-# Features
+---
 
-- **In-browser privacy:** All AI models run locally (client side) on your hardware, ensuring that your data is processed only on your pc. No server-side processing!
-- **Offline:** Once the initial download of a model is processed, you'll be able to use it without an active internet connection.
-- **Chat history:** Access and manage your conversation history.
-- **Supports new open-source models:** Chat with popular open-source models such as Gemma, Llama2 & 3 and Mistral!
-- **Responsive design:** If your phone supports WebGl, you'll be able to use Chatty just as you would on desktop.
-- **Markdown & code highlight:** Messages returned as markdown will be displayed as such & messages that include code, will be highlighted for easy access.
-- **Chat with files:** Load files (pdf & all non-binary files supported - even code files) and ask the models questions about them - fully local!
-- **Custom memory support:** Add custom instructions/memory to allow the AI to provide better and more personalized responses.
-- **Export chat messages:** Seamlessly generate and save your chat messages in either json or markdown format.
-- **Voice message support:** Use voice interactions to interact with the models.
-- **Regenerate responses:** Not quite the response you were hoping for? Quickly regenerate it without having to write out your prompt again.
-- **Light & Dark mode:** Switch between light & dark mode.
+## 📋 Table of Contents
 
+- [Features](#features)
+- [Supported Backends](#supported-backends)
+- [Installation](#installation)
+- [Requirements](#requirements)
+- [Development](#development)
+- [Roadmap](#roadmap)
+- [Credits](#credits)
 
-# Aim
+---
 
-Offeline attempts to at bring the functionality from popular AI interfaces such as ChatGPT and Gemini into a in-browser experience.
+## ✨ Features
 
-# Browser support
+### Core Capabilities
 
-WebGPU is enabled and supported in both Chrome & Edge. To enable it in Firefox Check the [browser compatibility](https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API#browser_compatibility) .
+- **🔒 Complete Privacy:** All AI models run locally on your hardware. No data is sent to external servers. Process everything on your machine.
+- **📱 Multi-Platform:** Use via browser (web app) or native desktop application with Electron
+- **⚡ Offline-Capable:** Download models once, use them offline indefinitely (WebGPU mode)
+- **🎯 Multiple AI Backends:** Choose your preferred inference engine:
+  - **WebGPU** - Run models directly in your browser using GPU acceleration
+  - **Ollama** - Manage and run models with Ollama backend
+  - **llama.cpp** - CPU/GPU optimized inference on desktop
 
+### Chat & Interaction
 
-## Install from source
+- **💬 Rich Chat Interface:** Clean, intuitive conversation interface with real-time streaming responses
+- **📄 File Embeddings:** Load and ask questions about documents (PDF, MD, DOCX, TXT, CSV, RTF) - fully locally!
+- **🎤 Voice Support:** Interact with the AI using voice messages
+- **🔄 Regenerate Responses:** Quickly regenerate AI responses without retyping prompts
+- **💾 Chat History:** Persistent, organized conversation history across sessions
+- **📋 Export Conversations:** Save your chats as JSON or Markdown
 
-follow the steps below to run locally:
+### AI Customization
 
-**1. Clone the repository to a directory on your pc via command prompt:**
+- **🧠 Custom Memory/Instructions:** Add custom system prompts and memory to personalize AI behavior
+- **🔍 Web Search Integration:** Optional real-time web search capabilities with Tavily or DuckDuckGo (when enabled)
+- **🌙 Light & Dark Mode:** Toggle between themes for comfortable usage
+- **✨ Markdown & Code Syntax Highlighting:** Beautifully rendered markdown and syntax-highlighted code blocks
+- **🤖 Model Selection:** Easily switch between different open-source models
 
+### Supported Models
+
+- **Llama 2 & 3** - Meta's popular language models
+- **Gemma** - Google's efficient models
+- **Mistral** - Mistral AI's powerful models
+- **And more** - Support for any GGUF-compatible models
+
+---
+
+## 🔧 Supported Backends
+
+| Backend | Platform | Type | Notes |
+|---------|----------|------|-------|
+| **WebGPU** | Browser | GPU | Native browser acceleration, no installation needed |
+| **Ollama** | Desktop (Windows/Mac/Linux) | CPU/GPU | Easy model management, requires Ollama installation |
+| **llama.cpp** | Desktop (Windows/Mac/Linux) | CPU/GPU | Direct integration, optimized performance |
+
+---
+
+## 📥 Installation
+
+### Web Application
+
+#### Prerequisites
+
+- Node.js 18+
+- npm or pnpm package manager
+- Modern browser with WebGPU support (Chrome/Edge/Firefox with flags)
+
+#### Setup
+
+1. **Clone the repository:**
+
+   ```bash
+   git clone https://github.com/iBz-04/omnibot
+   cd omnibot
+   ```
+
+2. **Install dependencies:**
+
+   ```bash
+   npm install
+   # or
+   pnpm install
+   ```
+
+3. **Run development server:**
+
+   ```bash
+   npm run dev
+   # or
+   pnpm dev
+   ```
+
+4. **Open in browser:**
+
+   Navigate to [http://localhost:3000](http://localhost:3000)
+
+#### Production Build
+
+```bash
+npm run build
+npm run start
 ```
-git clone https://github.com/iBz-04/offeline
-```
 
-**2. Install dependencies:**
+---
 
-```
-npm install
-```
+### Desktop Application
 
-**3. Start the development server:**
+#### Prerequisites
 
-```
-npm run dev
-```
+- Node.js 18+
+- pnpm (recommended)
+- For **Ollama backend**: [Ollama](https://ollama.ai) installed and running
+- For **llama.cpp backend**: Models in GGUF format
 
-**4. Go to [localhost:3000](http://localhost:3000) !**
+#### Setup
 
-## Docker
+1. **Install desktop dependencies:**
 
-> [!BEWARE]  
-> The Dockerfile is not yet optimized for production environment. but if you want to do it, see [Nextjs example](https://github.com/vercel/next.js/blob/canary/examples/with-docker/Dockerfile)
+   ```bash
+   cd desktop
+   pnpm install
+   ```
 
-use `docker-compose`:
+2. **Development Mode:**
 
-```
+   ```bash
+   pnpm electron:dev
+   ```
+
+3. **Production Build:**
+
+   ```bash
+   pnpm electron:prod
+   ```
+
+#### Desktop Features
+
+- Native application experience
+- Seamless Ollama integration (auto-start/stop)
+- Direct llama.cpp support
+- System tray integration
+- Model management UI
+
+---
+
+### Docker
+
+> **⚠️ Note:** Dockerfile not yet optimized for production. See [Next.js Docker example](https://github.com/vercel/next.js/blob/canary/examples/with-docker/Dockerfile) for reference.
+
+```bash
 docker compose up
 ```
 
-> If you've made changes and want to rebuild, you can simply run `docker-compose up --build`
+To rebuild after changes:
 
-# checklist
+```bash
+docker compose up --build
+```
 
-- [ ] **Web search:** The ability to use internet websearch (if user wants)
+---
 
-- [ ] **Multiple file embeddings:** The ability to embed multiple files instead of one at a time for each session.
+## 💾 Requirements
 
+### Browser (WebGPU)
 
+- **GPU:** GPU with WebGPU support
+  - 3B models: ~3GB VRAM
+  - 7B models: ~6GB VRAM
+  - Larger models: Proportionally more VRAM
+- **Browser:** Chrome/Edge 113+, Firefox with WebGPU enabled
 
-# Hardware requirements
+### Desktop (Ollama/llama.cpp)
 
-> [!NOTE]  
-> To run the models efficiently, you'll need a GPU with enough memory. 7B models require a GPU with about 6GB memory whilst 3B models require around 3GB.
->
-> Smaller models might not be able to process file embeddings as efficient as larger ones.
+- **RAM:** 8GB+ recommended for 7B models
+- **CPU:** Multi-core processor recommended
+- **GPU:** Optional but recommended for faster inference
+  - NVIDIA (CUDA support)
+  - Apple Silicon (Metal support)
+  - AMD (Vulkan support)
 
-# Credit
+> **Tip:** Smaller models (3B) are more efficient and suitable for file embeddings on resource-constrained systems.
 
-Offeline is built using [HuggingFace](https://huggingface.co/), open source LLMs and [LangChain](https://www.langchain.com/).
+---
+
+## 🛠️ Development
+
+### Project Structure
+
+```
+omnibot/
+├── src/                    # Next.js frontend
+│   ├── app/               # Next.js app directory
+│   ├── components/        # React components
+│   ├── hooks/             # Custom React hooks
+│   ├── lib/               # Utilities (search, embedding, tools)
+│   ├── providers/         # Context providers
+│   └── types/             # TypeScript definitions
+├── desktop/               # Electron desktop app
+│   ├── main/              # Main process
+│   └── preload/           # Preload scripts
+└── package.json          # Root dependencies
+```
+
+### Tech Stack
+
+**Frontend:**
+
+- Next.js 14 - React framework
+- TypeScript - Type safety
+- Tailwind CSS - Styling
+- Radix UI - Component library
+- Framer Motion - Animations
+
+**Backends:**
+
+- @mlc-ai/web-llm - WebGPU inference
+- Ollama - Model server
+- node-llama-cpp - Direct llama.cpp binding
+
+**Utilities:**
+
+- LangChain - AI/LLM utilities
+- Transformers.js - ONNX model support
+- react-markdown - Markdown rendering
+- Zustand - State management
+
+### Building
+
+```bash
+# Web development
+npm run dev
+
+# Desktop development
+cd desktop && pnpm electron:dev
+
+# Full build
+npm run build
+```
+
+---
+
+## 🗺️ Roadmap
+
+### Completed ✅
+
+- [x] Web application with WebGPU support
+- [x] Desktop application (Electron)
+- [x] Ollama integration
+- [x] llama.cpp integration
+- [x] File embeddings (PDF, DOCX, TXT, etc.)
+- [x] Web search integration (Tavily, DuckDuckGo)
+- [x] Chat history & export
+- [x] Custom memory/instructions
+- [x] Voice message support
+
+### In Progress 🔄
+
+- [ ] Multiple file embeddings in single session
+- [ ] Enhanced model management
+- [ ] Performance optimizations
+- [ ] Additional search backends
+
+### Future 📋
+
+- [ ] Advanced RAG (Retrieval-Augmented Generation)
+- [ ] Plugin system
+- [ ] Cloud sync (optional, privacy-preserving)
+- [ ] API for third-party integrations
+
+---
+
+## 🎨 Browser Support
+
+| Browser | WebGPU Support | Status |
+|---------|---|---|
+| Chrome/Edge | 113+ | ✅ Full support |
+| Firefox | 120+ | ✅ Full support (enable `dom.webgpu.enabled`) |
+| Safari | 17+ (macOS) | ✅ Full support |
+
+Check [WebGPU browser compatibility](https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API#browser_compatibility) for detailed information.
+
+---
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Credits
+
+Omnibot is built with:
+
+- [HuggingFace](https://huggingface.co/) - Model hub
+- [LangChain](https://www.langchain.com/) - LLM framework
+- [Next.js](https://nextjs.org/) - React framework
+- [Electron](https://www.electronjs.org/) - Desktop framework
+- [Ollama](https://ollama.ai) - Model server
+- [node-llama-cpp](https://github.com/withcatai/node-llama-cpp) - llama.cpp Node.js binding
+- Open-source LLM community
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Feel free to open issues and pull requests.
+
+---
+
+**Made with ❤️ for privacy-conscious AI enthusiasts**
 
