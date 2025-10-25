@@ -19,22 +19,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'pnpm'
-          cache-dependency-path: 'pnpm-lock.yaml'
-
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
+          cache: 'npm'
 
       - name: Install dependencies
-        run: pnpm install
+        run: npm ci
 
       - name: Run linter
-        run: pnpm lint
+        run: npm run lint
 
   build:
     name: Build Application
@@ -49,22 +40,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'pnpm'
-          cache-dependency-path: 'pnpm-lock.yaml'
-
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
+          cache: 'npm'
 
       - name: Install dependencies
-        run: pnpm install
+        run: npm ci
 
       - name: Build Next.js app
-        run: pnpm build
+        run: npm run build
         env:
           NEXT_TELEMETRY_DISABLED: 1
 
