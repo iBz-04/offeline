@@ -7,6 +7,7 @@ import { WebLLMProvider } from "@/providers/web-llm-provider";
 import { OllamaProvider } from "@/providers/ollama-provider";
 import { LlamaCppProvider } from "@/providers/llama-cpp-provider";
 import { GoogleAnalytics } from "@next/third-parties/google";
+import { Analytics } from "@vercel/analytics/next";
 import { Suspense } from "react";
 import { LoadingScreenWrapper } from "@/components/loading-screen-wrapper";
 import { ElectronLayoutWrapper } from "@/components/electron-layout-wrapper";
@@ -14,9 +15,9 @@ import { ElectronLayoutWrapper } from "@/components/electron-layout-wrapper";
 const metainfo = {
   name: "Offeline",
   title: "Offeline",
-  description: "Chat with llm models offline and in your browser",
+  description: "Chat with llm and slms privately, and locally on your machine and browser",
   url: "https://www.offeline.com",
-  image: "https://res.cloudinary.com/diekemzs9/image/upload/v1732472018/dark_wljsy8.png",
+  image: "https://res.cloudinary.com/diekemzs9/image/upload/v1761411186/Screenshot_2025-10-25_184555_va3jxk.png",
 };
 
 export const metadata: Metadata = {
@@ -97,6 +98,7 @@ export default function RootLayout({
             </OllamaProvider>
           </LlamaCppProvider>
         </LoadingScreenWrapper>
+        <Analytics />
       </body>
       <GoogleAnalytics gaId="G-4186JP0XGB" />
     </html>

@@ -27,7 +27,7 @@ jobs:
       - name: Run linter
         run: npm run lint
 
-  # Uncomment when you add tests
+  # dear contributers :) Uncomment for tests
   # test:
   #   name: Run Tests
   #   runs-on: ubuntu-latest
