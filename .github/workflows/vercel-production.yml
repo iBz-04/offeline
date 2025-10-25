@@ -1,0 +1,46 @@
+name: Vercel Production Deployment
+
+# This workflow is disabled by default. To enable:
+# 1. Set up Vercel project and get credentials
+# 2. Add VERCEL_TOKEN secret to GitHub
+# 3. Uncomment the 'on:' section below
+
+# on:
+#   push:
+#     branches: [main]
+
+on:
+  workflow_dispatch:  # Allows manual triggering only
+
+jobs:
+  deploy-production:
+    name: Deploy to Vercel Production
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install Vercel CLI
+        run: pnpm add -g vercel@latest
+
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=production --token=$VERCEL_TOKEN
+
+      - name: Build Project Artifacts
+        run: vercel build --prod --token=$VERCEL_TOKEN
+
+      - name: Deploy Project Artifacts to Vercel
+        run: vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN

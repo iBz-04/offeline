@@ -1,0 +1,61 @@
+name: Vercel Preview Deployment
+
+# This workflow is disabled by default. To enable:
+# 1. Set up Vercel project and get credentials
+# 2. Add VERCEL_TOKEN secret to GitHub
+# 3. Uncomment the 'on:' section below
+
+# on:
+#   pull_request:
+#     branches: [main]
+
+on:
+  workflow_dispatch:  # Allows manual triggering only
+
+jobs:
+  deploy-preview:
+    name: Deploy to Vercel Preview
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install Vercel CLI
+        run: pnpm add -g vercel@latest
+
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=preview --token=$VERCEL_TOKEN
+
+      - name: Build Project Artifacts
+        run: vercel build --token=$VERCEL_TOKEN
+
+      - name: Deploy Project Artifacts to Vercel
+        id: deploy
+        run: |
+          url=$(vercel deploy --prebuilt --token=$VERCEL_TOKEN)
+          echo "preview-url=$url" >> $GITHUB_OUTPUT
+
+      - name: Comment PR with preview URL
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `✅ Preview deployment ready!\n\n🔗 [View Preview](${{ steps.deploy.outputs.preview-url }})`
+            })
