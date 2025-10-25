@@ -8,7 +8,7 @@ import { LlamaCppManager } from './llama-cpp-manager';
 
 
 // WebLLM requires WebGPU which needs GPU acceleration
-// Only disable if absolutely necessary for debugging
+// Only disable this if necessary for debugging
 // if ((process as any).env.ELECTRON_DISABLE_SANDBOX) {
 //   app.disableHardwareAcceleration();
 // }
