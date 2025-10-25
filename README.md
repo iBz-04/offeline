@@ -162,22 +162,6 @@ npm run start
 
 ---
 
-### Docker
-
-> **Note:** Dockerfile not yet optimized for production. See [Next.js Docker example](https://github.com/vercel/next.js/blob/canary/examples/with-docker/Dockerfile) for reference.
-
-```bash
-docker compose up
-```
-
-To rebuild after changes:
-
-```bash
-docker compose up --build
-```
-
----
-
 ## Requirements
 
 ### Browser (WebGPU)
