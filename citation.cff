@@ -1,0 +1,10 @@
+cff-version: 1.0.0
+message: "Do you use this project?, if yes,  cite it as shown below."
+authors:
+  - family-names: Rayamah
+    given-names: Ibrahim
+title: Offeline
+version: 0.1.0
+date-released: 2025-10-25
+repository-code: https://github.com/iBz-04/offeline
+url: www.offeline.com
