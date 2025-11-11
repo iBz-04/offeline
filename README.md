@@ -6,10 +6,25 @@
   <img src="https://res.cloudinary.com/diekemzs9/image/upload/v1761405595/cat_logo_c160ai.png" alt="offelineLogo" width="170"/>
 </p>
 
+
 <div align="center">
    <p><b>Offeline is a privacy-first desktop & web app for running  LLMs locally on your hardware using multiple backend options
 </b></p>
 </div>
+
+<div align="center">
+   <h3>Open source version</h3>
+</div
+   
+https://github.com/user-attachments/assets/ecaf1f46-2891-40ec-a0c0-7649239b5a79
+
+<div align="center">
+   <h3>Production desktop demo</h3>
+</div
+   
+https://github.com/user-attachments/assets/61b15f14-72bb-4549-86ab-ba590efa9d21
+
+
 
 
 ---
@@ -46,6 +61,9 @@
 - **Regenerate Responses:** Quickly regenerate AI responses without retyping prompts
 - **Chat History:** Persistent, organized conversation history across sessions
 - **Export Conversations:** Save your chats as JSON or Markdown
+-  **RAG capabilities:** Use retrieval augmented generation to chat with your documents
+-  **Knowledge base:** A smarter way to manage your documents
+
 
 ### AI Customization
 
