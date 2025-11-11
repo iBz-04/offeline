@@ -12,17 +12,15 @@
 </b></p>
 </div>
 
-<div align="center">
-   <h3>Open source version</h3>
-</div
-   
-https://github.com/user-attachments/assets/ecaf1f46-2891-40ec-a0c0-7649239b5a79
 
-<div align="center">
-   <h3>Production desktop demo</h3>
-</div
+### Open source version
    
-https://github.com/user-attachments/assets/61b15f14-72bb-4549-86ab-ba590efa9d21
+   https://github.com/user-attachments/assets/ecaf1f46-2891-40ec-a0c0-7649239b5a79
+
+
+### Production desktop demo
+   
+  https://github.com/user-attachments/assets/61b15f14-72bb-4549-86ab-ba590efa9d21
 
 
 
