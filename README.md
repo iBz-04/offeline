@@ -13,15 +13,14 @@
 </div>
 
 
-### Open source version
+### Web version
    
    https://github.com/user-attachments/assets/ecaf1f46-2891-40ec-a0c0-7649239b5a79
 
 
-### Production desktop demo
+### desktop version
    
-  https://github.com/user-attachments/assets/61b15f14-72bb-4549-86ab-ba590efa9d21
-
+https://github.com/user-attachments/assets/a8c0161f-549c-42fb-a23e-a9f31738cf66
 
 
 
