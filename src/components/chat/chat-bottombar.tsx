@@ -21,7 +21,6 @@ import { Mic, Send, SendHorizonal } from "lucide-react";
 import useSpeechToText from "@/hooks/useSpeechRecognition";
 import MultiImagePicker from "../image-embedder";
 import { Models } from "@/lib/models";
-import WebSearchToggle from "../web-search-toggle";
 import InputHighlighter from "../input-highlighter";
 
 interface MergedProps extends ChatProps {
@@ -106,7 +105,6 @@ export default function ChatBottombar({
                 className="w-full items-center flex relative gap-2"
               >
                 <div className="absolute flex left-3 z-10">
-                  <WebSearchToggle />
                   {/*
                   <MultiImagePicker 
                     disabled={!selectedModel?.name?.includes("vision")} 
