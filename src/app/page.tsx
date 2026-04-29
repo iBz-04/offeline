@@ -19,7 +19,6 @@ import UsernameForm from "@/components/username-form";
 import useMemoryStore from "@/hooks/useMemoryStore";
 import { MessageWithFiles } from "@/lib/types";
 import { useRouter, useSearchParams } from "next/navigation";
-import { performWebSearch, formatSearchContextForAI } from "@/lib/search-helper";
 import { setToastFunction } from "@/lib/tools";
 import { toast } from "sonner";
 
@@ -232,12 +231,6 @@ export default function Home() {
       systemContent = customizedInstructions;
     }
     
-    // Add web search capability notice if search results are included
-    if (prompt.includes("[SYSTEM: You have access to real-time web search results")) {
-      const searchNotice = "You have access to real-time internet information through web search results. When search results are provided, use them to give accurate, up-to-date answers.";
-      systemContent = systemContent ? `${systemContent}\n\n${searchNotice}` : searchNotice;
-    }
-    
     if (systemContent) {
       messages.unshift({
         role: "system",
@@ -290,12 +283,6 @@ export default function Home() {
     let systemContent = "";
     if (isCustomizedInstructionsEnabled && customizedInstructions) {
       systemContent = customizedInstructions;
-    }
-    
-    // Add web search capability notice if search results are included
-    if (prompt.includes("[SYSTEM: You have access to real-time web search results")) {
-      const searchNotice = "You have access to real-time internet information through web search results. When search results are provided, use them to give accurate, up-to-date answers.";
-      systemContent = systemContent ? `${systemContent}\n\n${searchNotice}` : searchNotice;
     }
     
     if (systemContent) {
@@ -390,51 +377,8 @@ export default function Home() {
     try {
       setLoadingSubmit(true);
 
-      // Manual web search trigger: @web or /web or /search
-      const manualCmdMatch = input.match(/^(@web|\/web|\/search)\s+(.+)/i);
-      const isManualSearch = !!manualCmdMatch;
-      const manualQuery = manualCmdMatch ? manualCmdMatch[2].trim() : '';
-
-      // Check if tools should be enabled (when search is enabled and model supports it)
-      const toolsEnabledBase = useChatStore.getState().toolsEnabled && useChatStore.getState().searchEnabled;
-      let toolsEnabledForThisRequest = toolsEnabledBase;
-
-      // For older approach: still do upfront search if tools not enabled
-      let searchContext = "";
-      const hasSearchResults = !toolsEnabledBase && useChatStore.getState().searchEnabled;
-
-      // If user explicitly asked to web-search, do an upfront search and disable tool-calling for this turn
-      if (isManualSearch) {
-        try {
-          // Ensure search is enabled so UI reflects searching state
-          const { setSearchEnabled } = useChatStore.getState();
-          setSearchEnabled(true);
-
-          const results = await performWebSearch(manualQuery);
-          if (results && results.length > 0) {
-            searchContext = formatSearchContextForAI(results as any);
-          }
-          // Since we injected results, avoid double-calling tools for this turn
-          toolsEnabledForThisRequest = false;
-        } catch (searchError) {
-          console.error('Manual search failed, continuing without web context:', searchError);
-        }
-      }
-      
-      if (hasSearchResults) {
-        try {
-          const searchResults = await performWebSearch(currentInput);
-          if (searchResults && searchResults.length > 0) {
-            searchContext = formatSearchContextForAI(searchResults);
-          }
-        } catch (searchError) {
-          console.error("Search failed, continuing without web context:", searchError);
-        }
-      }
-
-      const enhancedInput = searchContext 
-        ? `[SYSTEM: You have access to real-time web search results. Use the following current information to answer the user's query accurately. This information is fresh from the internet and represents the most up-to-date data available.]\n\n${searchContext}\n\n[USER QUERY]: ${currentInput}\n\n[INSTRUCTION: Answer the user's query using the web search results provided above. These are real, current search results that give you access to up-to-date information. Cite specific sources with their numbers [1], [2], etc. when referencing information.]`
-        : currentInput;
+      const toolsEnabledForThisRequest = useChatStore.getState().toolsEnabled;
+      const enhancedInput = currentInput;
 
       if (selectedBackend === 'ollama') {
         if (!window.offlineAPI?.ollama || !ollama.isRunning || !ollama.currentModel) {

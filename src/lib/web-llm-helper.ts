@@ -30,6 +30,11 @@ interface ModelLoadState {
   modelName: string | null;
 }
 
+interface SafeModelLimits {
+  maxContextWindowSize: number;
+  maxTokens: number;
+}
+
 export default class WebLLMHelper {
   engine: webllm.MLCEngineInterface | null;
   setStoredMessages = useChatStore((state) => state.setMessages);
@@ -48,12 +53,18 @@ export default class WebLLMHelper {
   private generationAbortController: AbortController | null = null;
   private readonly MAX_RETRIES = 3;
   private readonly RETRY_DELAY_MS = 2000;
+  private loadedModelName: string | null = null;
   // Track a temporary downgrade of context window if device limits require it
   private forcedContextWindowSize: number | null = null;
 
   public constructor(engine: webllm.MLCEngineInterface | null) {
     // Ensure appConfig is properly initialized
     this.appConfig.useIndexedDBCache = true;
+    this.engine = engine;
+  }
+
+  // Keep helper's engine reference synchronized with global store
+  public setEngineInstance(engine: webllm.MLCEngineInterface | null): void {
     this.engine = engine;
   }
 
@@ -78,6 +89,30 @@ export default class WebLLMHelper {
     } catch {
       return null;
     }
+  }
+
+  // Conservative caps to improve reliability on larger models and limited GPUs
+  private getSafeModelLimits(modelName: string): SafeModelLimits {
+    const normalizedName = modelName.toLowerCase();
+
+    if (normalizedName.includes("3.8b") || normalizedName.includes("7b")) {
+      return {
+        maxContextWindowSize: 1024,
+        maxTokens: 512,
+      };
+    }
+
+    if (normalizedName.includes("1.5b")) {
+      return {
+        maxContextWindowSize: 2048,
+        maxTokens: 1024,
+      };
+    }
+
+    return {
+      maxContextWindowSize: 4096,
+      maxTokens: 2048,
+    };
   }
 
   // Initialize progress callback with cancellation support
@@ -151,11 +186,14 @@ export default class WebLLMHelper {
     }
 
   const inferenceSettings = useChatStore.getState().inferenceSettings;
+  const safeLimits = this.getSafeModelLimits(selectedModel.name);
     
     // Vision models need larger context window for image embeddings
     const isVisionModel = selectedModel?.name?.toLowerCase()?.includes('vision') ?? false;
     // Use either the user setting, vision default, or a previously forced lower window size
-    const baseCws = isVisionModel ? 8192 : inferenceSettings.contextWindowSize;
+    const baseCws = isVisionModel
+      ? 8192
+      : Math.min(inferenceSettings.contextWindowSize, safeLimits.maxContextWindowSize);
     const contextWindowSize = this.forcedContextWindowSize
       ? Math.min(baseCws, this.forcedContextWindowSize)
       : baseCws;
@@ -200,6 +238,18 @@ export default class WebLLMHelper {
       retryCount: 0,
       modelName: selectedModel.name,
     };
+
+    // Ensure previous model resources are released before loading a different model
+    if (this.engine && this.loadedModelName && this.loadedModelName !== selectedModel.name) {
+      try {
+        await this.engine.unload();
+      } catch (error) {
+        console.error("Error unloading previous model:", error);
+      } finally {
+        this.engine = null;
+        this.setEngine(null);
+      }
+    }
 
     // Check GPU support
     if (!this.hasGPU()) {
@@ -265,6 +315,8 @@ export default class WebLLMHelper {
         this.loadState.isLoading = false;
         this.loadState.isRetrying = false;
         this.abortController = null;
+        this.engine = engine;
+        this.loadedModelName = selectedModel.name;
         this.setEngine(engine);
         
         return engine;
@@ -412,6 +464,9 @@ export default class WebLLMHelper {
       }
       this.setEngine(null);
     }
+
+    this.engine = null;
+    this.loadedModelName = null;
     
     this.loadState = {
       isLoading: false,
@@ -446,6 +501,9 @@ export default class WebLLMHelper {
     
     const storedMessages = useChatStore.getState().messages;
     const inferenceSettings = useChatStore.getState().inferenceSettings;
+    const selectedModel = useChatStore.getState().selectedModel;
+    const safeLimits = this.getSafeModelLimits(selectedModel.name);
+    const safeMaxTokens = Math.min(inferenceSettings.maxTokens, safeLimits.maxTokens);
 
     // Build system content
     let systemContent = "You are a helpful assistant. Assist the user with their questions.";
@@ -454,11 +512,6 @@ export default class WebLLMHelper {
       systemContent += " You are also provided with the following information from the user, keep them in mind for your responses: " + customizedInstructions;
     }
     
-    // Add web search capability notice if search results are included in the input
-    if (input.includes("[SYSTEM: You have access to real-time web search results")) {
-      systemContent += "\n\nIMPORTANT: You have access to real-time internet information through web search results. When search results are provided in the user's message, use them to give accurate, up-to-date answers. These are current, fresh results from the internet.";
-    }
-
     try {
       const completion = await engine.chat.completions.create({
         stream: true,
@@ -472,7 +525,7 @@ export default class WebLLMHelper {
         ],
         temperature: inferenceSettings.temperature,
         top_p: inferenceSettings.topP,
-        max_tokens: inferenceSettings.maxTokens
+        max_tokens: safeMaxTokens
       });
       
       for await (const chunk of completion) {
@@ -510,6 +563,8 @@ export default class WebLLMHelper {
     const storedMessages = useChatStore.getState().messages;
     const inferenceSettings = useChatStore.getState().inferenceSettings;
     const selectedModel = useChatStore.getState().selectedModel;
+    const safeLimits = this.getSafeModelLimits(selectedModel.name);
+    const safeMaxTokens = Math.min(inferenceSettings.maxTokens, safeLimits.maxTokens);
 
     // Build system content
     let systemContent = "You are a helpful assistant. Assist the user with their questions.";
@@ -520,7 +575,7 @@ export default class WebLLMHelper {
 
     // Add tool capability notice
     if (enableTools && modelSupportsFunctionCalling(selectedModel.name)) {
-      systemContent += "\n\nYou have access to tools/functions. When you need current information or real-time data, use the appropriate tool. Always call tools when needed rather than saying you don't have access.";
+      systemContent += "\n\nYou have access to tools/functions.";
     }
 
     const messages: any[] = [
@@ -542,7 +597,7 @@ export default class WebLLMHelper {
           messages,
           temperature: inferenceSettings.temperature,
           top_p: inferenceSettings.topP,
-          max_tokens: inferenceSettings.maxTokens,
+          max_tokens: safeMaxTokens,
         };
 
         // Add tools if supported

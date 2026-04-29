@@ -4,7 +4,6 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { Document } from "langchain/document";
 import { MessageWithFiles } from "@/lib/types";
-import { SearchResult } from "@/lib/duckduckgo";
 
 const LOCAL_SELECTED_MODEL = "selectedModel";
 
@@ -31,9 +30,6 @@ interface State {
   files: File[] | undefined;
   base64Images: string[] | null;
   inferenceSettings: InferenceSettings;
-  searchEnabled: boolean;
-  searchResults: SearchResult[] | null;
-  isSearching: boolean;
   toolsEnabled: boolean;
 }
 
@@ -60,9 +56,6 @@ interface Actions {
   setFiles: (files: File[] | undefined) => void;
   setBase64Images: (base64Images: string[] | null) => void;
   setInferenceSettings: (settings: InferenceSettings) => void;
-  setSearchEnabled: (enabled: boolean) => void;
-  setSearchResults: (results: SearchResult[] | null) => void;
-  setIsSearching: (searching: boolean) => void;
   setToolsEnabled: (enabled: boolean) => void;
   resetState: () => void;
 }
@@ -84,9 +77,8 @@ const useChatStore = create<State & Actions>()(
       selectedBackend: getDefaultBackend(), // Ollama for desktop, WebLLM for web
       setSelectedModel: (model: Model) =>
         set((state: State) => ({
-          selectedModel:
-            state.selectedModel !== model ? model : state.selectedModel,
-          modelHasChanged: true,
+          selectedModel: state.selectedModel !== model ? model : state.selectedModel,
+          modelHasChanged: state.selectedModel !== model,
         })),
       setSelectedBackend: (backend: LLMBackend) => set({ selectedBackend: backend }),
 
@@ -133,15 +125,6 @@ const useChatStore = create<State & Actions>()(
       },
       setInferenceSettings: (settings) => set({ inferenceSettings: settings }),
 
-      searchEnabled: false,
-      setSearchEnabled: (enabled) => set({ searchEnabled: enabled }),
-
-      searchResults: null,
-      setSearchResults: (results) => set({ searchResults: results }),
-
-      isSearching: false,
-      setIsSearching: (searching) => set({ isSearching: searching }),
-
       toolsEnabled: true, // Enable tools by default
       setToolsEnabled: (enabled) => set({ toolsEnabled: enabled }),
 
@@ -153,9 +136,6 @@ const useChatStore = create<State & Actions>()(
         fileText: null,
         files: undefined,
         base64Images: null,
-        searchEnabled: false,
-        searchResults: null,
-        isSearching: false,
       }),
     }),
     {

@@ -21,8 +21,6 @@ import {
 import useChatStore from "@/hooks/useChatStore";
 import ButtonWithTooltip from "../button-with-tooltip";
 import { AnimatedRobotAvatar } from "../ui/animated-robot-avatar";
-import SearchResultsDisplay from "../search-results-display";
-import SearchIndicator from "../search-indicator";
 
 export default function ChatList({
   messages,
@@ -70,8 +68,6 @@ export default function ChatList({
 
   // Zustand
   const isLoading = useChatStore((state) => state.isLoading);
-  const searchResults = useChatStore((state) => state.searchResults);
-  const isSearching = useChatStore((state) => state.isSearching);
 
   const scrollToBottom = () => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -306,12 +302,6 @@ export default function ChatList({
                     <AnimatedRobotAvatar className="text-foreground" />
                   </Avatar>
                   <div className="flex flex-col gap-2 max-w-xs sm:max-w-xl">
-                    {index === messages.length - 1 && isSearching && (
-                      <SearchIndicator />
-                    )}
-                    {index === messages.length - 1 && searchResults && searchResults.length > 0 && (
-                      <SearchResultsDisplay results={searchResults} />
-                    )}
                     <span className="bg-accent p-3 rounded-r-md rounded-tl-md overflow-x-auto">
                     {/* Show progress bar if loading */}
                     {message.loadingProgress !== undefined && (

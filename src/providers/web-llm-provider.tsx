@@ -24,17 +24,46 @@ export const WebLLMProvider: React.FC<{ children: React.ReactNode }> = ({
   const engine = useChatStore((state) => state.engine);
   const selectedModel = useChatStore((state) => state.selectedModel);
   const modelHasChanged = useChatStore((state) => state.modelHasChanged);
-  const setEngine = useChatStore((state) => state.setEngine);
+  const setModelHasChanged = useChatStore((state) => state.setModelHasChanged);
   const selectedBackend = useChatStore((state) => state.selectedBackend);
 
   const [webLLMHelper] = React.useState(new WebLLMHelper(engine));
 
   useEffect(() => {
-    // If model has changed and we're using WebLLM, reset engine to use new model
-    if (modelHasChanged && selectedBackend === 'webllm') {
-      setEngine(null);
+    webLLMHelper.setEngineInstance(engine);
+  }, [engine, webLLMHelper]);
+
+  useEffect(() => {
+    if (!modelHasChanged || selectedBackend !== 'webllm') {
+      return;
     }
-  }, [selectedModel, modelHasChanged, setEngine, selectedBackend]);
+
+    let isDisposed = false;
+
+    const resetForModelChange = async () => {
+      try {
+        await webLLMHelper.unload();
+      } finally {
+        if (!isDisposed) {
+          setModelHasChanged(false);
+        }
+      }
+    };
+
+    void resetForModelChange();
+
+    return () => {
+      isDisposed = true;
+    };
+  }, [selectedModel, modelHasChanged, selectedBackend, setModelHasChanged, webLLMHelper]);
+
+  useEffect(() => {
+    if (selectedBackend === 'webllm' || !engine) {
+      return;
+    }
+
+    void webLLMHelper.unload();
+  }, [selectedBackend, engine, webLLMHelper]);
 
   // Note: Store rehydration is now handled in LoadingScreenWrapper
   // to ensure proper timing with the loading screen

@@ -1,23 +1,12 @@
 /**
  * Tool/Function definitions for AI models that support function calling
- * Implements web search as a callable tool for AI agents
  */
-
-import { duckduckgoClient } from './duckduckgo';
-import { SearchResult } from './duckduckgo';
-import { tavilyClient } from './tavily';
 
 // Client-side toast notifications - will be set by client component
 let toastFn: ((message: string, type: 'error' | 'warning') => void) | null = null;
 
 export function setToastFunction(fn: (message: string, type: 'error' | 'warning') => void) {
   toastFn = fn;
-}
-
-function showToast(message: string, type: 'error' | 'warning' = 'error') {
-  if (toastFn) {
-    toastFn(message, type);
-  }
 }
 
 export interface ToolDefinition {
@@ -50,32 +39,6 @@ export interface ToolResult {
 }
 
 /**
- * Web search tool definition for AI models
- */
-export const webSearchTool: ToolDefinition = {
-  type: 'function',
-  function: {
-    name: 'web_search',
-    description: 'Search the internet for current information, news, facts, or any real-time data. Use this when you need up-to-date information that you don\'t have in your training data. Returns a list of search results with titles, URLs, and content snippets.',
-    parameters: {
-      type: 'object',
-      properties: {
-        query: {
-          type: 'string',
-          description: 'The search query. Be specific and use keywords that will return relevant results. Examples: "latest AI news 2025", "current weather in New York", "what happened today"',
-        },
-        max_results: {
-          type: 'number',
-          description: 'Maximum number of search results to return (1-10). Default is 8.',
-          default: 8,
-        }
-      },
-      required: ['query'],
-    },
-  },
-};
-
-/**
  * Get current date/time tool definition
  */
 export const getCurrentDateTool: ToolDefinition = {
@@ -95,7 +58,6 @@ export const getCurrentDateTool: ToolDefinition = {
  * All available tools
  */
 export const availableTools: ToolDefinition[] = [
-  webSearchTool,
   getCurrentDateTool,
 ];
 
@@ -106,12 +68,9 @@ export async function executeToolCall(toolCall: ToolCall): Promise<ToolResult> {
   const { name, arguments: argsJson } = toolCall.function;
   
   try {
-    const args = JSON.parse(argsJson);
+    JSON.parse(argsJson);
     
     switch (name) {
-      case 'web_search':
-        return await executeWebSearch(toolCall.id, args);
-      
       case 'get_current_date':
         return executeGetCurrentDate(toolCall.id);
       
@@ -131,127 +90,6 @@ export async function executeToolCall(toolCall: ToolCall): Promise<ToolResult> {
       name,
       content: JSON.stringify({ 
         error: error instanceof Error ? error.message : 'Unknown error' 
-      }),
-    };
-  }
-}
-
-/**
- * Execute web search tool
- */
-async function executeWebSearch(
-  toolCallId: string,
-  args: { query: string; max_results?: number }
-): Promise<ToolResult> {
-  const maxResults = args.max_results || 8;
-  
-  try {
-    // Try to use desktop search API first (Electron app)
-    if (typeof window !== 'undefined' && (window as any).offlineAPI?.search?.web) {
-      console.log('[Web Search] Using desktop search API');
-      const results = await (window as any).offlineAPI.search.web(args.query, maxResults);
-      
-      const formattedResults = results.map((result: any, index: number) => ({
-        index: index + 1,
-        title: result.title,
-        url: result.url,
-        snippet: result.content,
-        published: result.publishedDate || 'N/A',
-      }));
-      
-      return {
-        tool_call_id: toolCallId,
-        role: 'tool',
-        name: 'web_search',
-        content: JSON.stringify({
-          query: args.query,
-          results_count: formattedResults.length,
-          results: formattedResults,
-        }, null, 2),
-      };
-    }
-
-    // Choose backend: prefer Tavily if selected and API key available, else fallback to DuckDuckGo
-    let useTavily = false;
-    if (typeof window !== 'undefined') {
-      const selected = localStorage.getItem('searchBackend');
-      useTavily = selected === 'tavily';
-    }
-
-    if (useTavily) {
-      try {
-        console.log('[Web Search] Using Tavily API');
-        const response = await tavilyClient.search(args.query, {
-          maxResults: Math.min(maxResults, 10),
-          searchDepth: 'basic',
-          includeAnswer: true,
-          topic: 'general',
-        });
-
-        const formattedResults = response.results.map((result: any, index: number) => ({
-          index: index + 1,
-          title: result.title,
-          url: result.url,
-          snippet: (result as any).content ?? '',
-          published: (result as any).publishedDate || 'N/A',
-        }));
-
-        return {
-          tool_call_id: toolCallId,
-          role: 'tool',
-          name: 'web_search',
-          content: JSON.stringify({
-            query: args.query,
-            results_count: formattedResults.length,
-            results: formattedResults,
-          }, null, 2),
-        };
-      } catch (err) {
-        console.warn('[Web Search] Tavily failed, falling back to DuckDuckGo:', err instanceof Error ? err.message : err);
-        
-        // Show toast if Tavily key is missing
-        if (err instanceof Error && err.message.includes('API key')) {
-          showToast('Tavily API key not configured. Falling back to DuckDuckGo.', 'warning');
-        }
-        // fall through to DuckDuckGo below
-      }
-    }
-
-    // Fallback to browser-based DuckDuckGo (limited by CORS)
-    console.log('[Web Search] Using browser DuckDuckGo API (CORS limited)');
-    const response = await duckduckgoClient.search(args.query, {
-      maxResults: Math.min(maxResults, 10),
-      categories: 'general',
-      language: 'en',
-    });
-    
-    // Format results for the AI
-    const formattedResults = response.results.map((result: SearchResult, index: number) => ({
-      index: index + 1,
-      title: result.title,
-      url: result.url,
-      snippet: result.content,
-      published: result.publishedDate || 'N/A',
-    }));
-    
-    return {
-      tool_call_id: toolCallId,
-      role: 'tool',
-      name: 'web_search',
-      content: JSON.stringify({
-        query: args.query,
-        results_count: formattedResults.length,
-        results: formattedResults,
-      }, null, 2),
-    };
-  } catch (error) {
-    return {
-      tool_call_id: toolCallId,
-      role: 'tool',
-      name: 'web_search',
-      content: JSON.stringify({ 
-        error: `Search failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        results: [],
       }),
     };
   }
@@ -279,21 +117,6 @@ function executeGetCurrentDate(toolCallId: string): ToolResult {
       timestamp: now.getTime(),
     }),
   };
-}
-
-/**
- * Format tool results for display in chat
- */
-export function formatToolResultsForDisplay(results: SearchResult[]): string {
-  if (!results || results.length === 0) {
-    return 'No search results found.';
-  }
-  
-  return results
-    .map((result, index) => 
-      `[${index + 1}] ${result.title}\n${result.url}\n${result.content}`
-    )
-    .join('\n\n');
 }
 
 /**
