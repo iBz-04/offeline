@@ -30,7 +30,6 @@ interface State {
   files: File[] | undefined;
   base64Images: string[] | null;
   inferenceSettings: InferenceSettings;
-  toolsEnabled: boolean;
 }
 
 interface Actions {
@@ -56,7 +55,6 @@ interface Actions {
   setFiles: (files: File[] | undefined) => void;
   setBase64Images: (base64Images: string[] | null) => void;
   setInferenceSettings: (settings: InferenceSettings) => void;
-  setToolsEnabled: (enabled: boolean) => void;
   resetState: () => void;
 }
 
@@ -125,9 +123,6 @@ const useChatStore = create<State & Actions>()(
       },
       setInferenceSettings: (settings) => set({ inferenceSettings: settings }),
 
-      toolsEnabled: true, // Enable tools by default
-      setToolsEnabled: (enabled) => set({ toolsEnabled: enabled }),
-
       resetState: () => set({
         isLoading: false,
         isModelLoading: false,
@@ -140,12 +135,11 @@ const useChatStore = create<State & Actions>()(
     }),
     {
       name: LOCAL_SELECTED_MODEL,
-      // Only save selectedModel, selectedBackend, inferenceSettings and toolsEnabled to local storage with partialize
+      // Only save selectedModel, selectedBackend, and inferenceSettings to local storage with partialize
       partialize: (state) => ({
         selectedModel: state.selectedModel,
         selectedBackend: state.selectedBackend,
         inferenceSettings: state.inferenceSettings,
-        toolsEnabled: state.toolsEnabled,
       }),
       storage: createJSONStorage(() => localStorage),
       onRehydrateStorage: () => (state) => {

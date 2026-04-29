@@ -19,8 +19,6 @@ import UsernameForm from "@/components/username-form";
 import useMemoryStore from "@/hooks/useMemoryStore";
 import { MessageWithFiles } from "@/lib/types";
 import { useRouter, useSearchParams } from "next/navigation";
-import { setToastFunction } from "@/lib/tools";
-import { toast } from "sonner";
 
 export default function Home() {
   const [open, setOpen] = useState(false);
@@ -108,17 +106,6 @@ export default function Home() {
     }
   }, []);
 
-  // Initialize toast function for tools module
-  useEffect(() => {
-    setToastFunction((message: string, type: 'error' | 'warning') => {
-      if (type === 'warning') {
-        toast.warning(message);
-      } else {
-        toast.error(message);
-      }
-    });
-  }, []);
-
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -151,23 +138,14 @@ export default function Home() {
 
   const generateCompletion = async (
     loadedEngine: webllm.MLCEngineInterface,
-    prompt: string,
-    useTools: boolean = false
+    prompt: string
   ) => {
-    const completion = useTools 
-      ? webLLMHelper.generateCompletionWithTools(
-          loadedEngine,
-          prompt,
-          customizedInstructions,
-          isCustomizedInstructionsEnabled,
-          true
-        )
-      : webLLMHelper.generateCompletion(
-          loadedEngine,
-          prompt,
-          customizedInstructions,
-          isCustomizedInstructionsEnabled
-        );
+    const completion = webLLMHelper.generateCompletion(
+      loadedEngine,
+      prompt,
+      customizedInstructions,
+      isCustomizedInstructionsEnabled
+    );
 
     let assistantMessage = "";
     let firstChunk = true;
@@ -377,7 +355,6 @@ export default function Home() {
     try {
       setLoadingSubmit(true);
 
-      const toolsEnabledForThisRequest = useChatStore.getState().toolsEnabled;
       const enhancedInput = currentInput;
 
       if (selectedBackend === 'ollama') {
@@ -440,7 +417,7 @@ export default function Home() {
               ...message.slice(0, -1),
               { role: "assistant", content: "", isProcessingDocument: false },
             ]);
-            await generateCompletion(loadedEngine, qaPrompt, false);
+            await generateCompletion(loadedEngine, qaPrompt);
           } catch (docError) {
             console.error("Document processing error:", docError);
             setStoredMessages((message) => [
@@ -451,10 +428,10 @@ export default function Home() {
               },
               { role: "assistant", content: "" },
             ]);
-            await generateCompletion(loadedEngine, enhancedInput, toolsEnabledForThisRequest);
+            await generateCompletion(loadedEngine, enhancedInput);
           }
         } else {
-          await generateCompletion(loadedEngine, enhancedInput, toolsEnabledForThisRequest);
+          await generateCompletion(loadedEngine, enhancedInput);
         }
       }
     } catch (e) {
