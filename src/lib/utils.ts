@@ -1,10 +1,15 @@
-import { ChatCompletionMessageParam } from "@mlc-ai/web-llm";
+import type { ChatCompletionMessageParam } from "@mlc-ai/web-llm";
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { MessageWithFiles } from "./types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
+}
+
+export function isCoarsePointer() {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(pointer: coarse)").matches;
 }
 
 export function getTextContentFromMessage(message: MessageWithFiles) {

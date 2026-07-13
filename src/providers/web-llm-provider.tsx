@@ -1,23 +1,10 @@
 "use client";
 
 import useChatStore from "@/hooks/useChatStore";
-import useMemoryStore from "@/hooks/useMemoryStore";
 import WebLLMHelper from "@/lib/web-llm-helper";
 import React, { useEffect } from "react";
+import { WebLLMContext } from "@/providers/web-llm-context";
 
-// Create a context
-const WebLLMContext = React.createContext<WebLLMHelper | null>(null);
-
-// Create a custom hook to consume the context
-export const useWebLLM = () => {
-  const webLLMHelper = React.useContext(WebLLMContext);
-  if (!webLLMHelper) {
-    throw new Error("useWebLLM must be used within a WebLLMProvider");
-  }
-  return webLLMHelper;
-};
-
-// WebLLMProvider component
 export const WebLLMProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -25,7 +12,6 @@ export const WebLLMProvider: React.FC<{ children: React.ReactNode }> = ({
   const selectedModel = useChatStore((state) => state.selectedModel);
   const modelHasChanged = useChatStore((state) => state.modelHasChanged);
   const setModelHasChanged = useChatStore((state) => state.setModelHasChanged);
-  const selectedBackend = useChatStore((state) => state.selectedBackend);
 
   const [webLLMHelper] = React.useState(new WebLLMHelper(engine));
 
@@ -34,7 +20,7 @@ export const WebLLMProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [engine, webLLMHelper]);
 
   useEffect(() => {
-    if (!modelHasChanged || selectedBackend !== 'webllm') {
+    if (!modelHasChanged) {
       return;
     }
 
@@ -55,18 +41,7 @@ export const WebLLMProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => {
       isDisposed = true;
     };
-  }, [selectedModel, modelHasChanged, selectedBackend, setModelHasChanged, webLLMHelper]);
-
-  useEffect(() => {
-    if (selectedBackend === 'webllm' || !engine) {
-      return;
-    }
-
-    void webLLMHelper.unload();
-  }, [selectedBackend, engine, webLLMHelper]);
-
-  // Note: Store rehydration is now handled in LoadingScreenWrapper
-  // to ensure proper timing with the loading screen
+  }, [selectedModel, modelHasChanged, setModelHasChanged, webLLMHelper]);
 
   return (
     <WebLLMContext.Provider value={webLLMHelper}>

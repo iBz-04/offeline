@@ -8,13 +8,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useEffect, useState } from "react";
-import * as webllm from "@mlc-ai/web-llm";
+import type { MLCEngineInterface } from "@mlc-ai/web-llm";
 import useChatStore from "@/hooks/useChatStore";
 import ChatLayout from "@/components/chat/chat-layout";
 import { v4 as uuidv4 } from "uuid";
-import { useWebLLM } from "@/providers/web-llm-provider";
-import { useOllama } from "@/providers/ollama-provider";
-import { useLlamaCpp } from "@/providers/llama-cpp-provider";
+import { useWebLLM } from "@/providers/web-llm-context";
 import UsernameForm from "@/components/username-form";
 import useMemoryStore from "@/hooks/useMemoryStore";
 import { MessageWithFiles } from "@/lib/types";
@@ -40,7 +38,6 @@ export default function Home() {
   const modelHasChanged = useChatStore((state) => state.modelHasChanged);
   const engine = useChatStore((state) => state.engine);
   const selectedModel = useChatStore((state) => state.selectedModel);
-  const selectedBackend = useChatStore((state) => state.selectedBackend);
   const fileText = useChatStore((state) => state.fileText);
   const files = useChatStore((state) => state.files);
   const setFileText = useChatStore((state) => state.setFileText);
@@ -58,8 +55,6 @@ export default function Home() {
   const searchParams = useSearchParams();
 
   const webLLMHelper = useWebLLM();
-  const ollama = useOllama();
-  const llamacpp = useLlamaCpp();
 
   useEffect(() => {
     const id = searchParams.get('id');
@@ -137,7 +132,7 @@ export default function Home() {
   }, [setLoadingError]);
 
   const generateCompletion = async (
-    loadedEngine: webllm.MLCEngineInterface,
+    loadedEngine: MLCEngineInterface,
     prompt: string
   ) => {
     const completion = webLLMHelper.generateCompletion(
@@ -186,114 +181,6 @@ export default function Home() {
     setLoadingSubmit(false);
   };
 
-  const generateOllamaCompletion = async (prompt: string) => {
-    if (!ollama.currentModel) {
-      throw new Error("No Ollama model selected. Please select a model first.");
-    }
-
-    const messages = storedMessages.slice(0, -1)
-      .filter(msg => msg.content)
-      .map(msg => ({
-        role: msg.role,
-        content: typeof msg.content === 'string' 
-          ? msg.content 
-          : Array.isArray(msg.content)
-            ? msg.content.map(c => c.type === 'text' ? c.text : '').join(' ')
-            : ''
-      }));
-
-    messages.push({ role: "user", content: prompt });
-
-    let systemContent = "";
-    if (isCustomizedInstructionsEnabled && customizedInstructions) {
-      systemContent = customizedInstructions;
-    }
-    
-    if (systemContent) {
-      messages.unshift({
-        role: "system",
-        content: systemContent
-      });
-    }
-
-    let assistantMessage = "";
-
-    const unsubToken = window.offlineAPI?.ollama?.onChatToken((token: string) => {
-      assistantMessage += token;
-      setStoredMessages((message) => [
-        ...message.slice(0, -1),
-        { role: "assistant", content: assistantMessage },
-      ]);
-    });
-
-    try {
-      const response = await ollama.chat(messages);
-      
-      setStoredMessages((message) => [
-        ...message.slice(0, -1),
-        { role: "assistant", content: response },
-      ]);
-    } finally {
-      if (unsubToken) unsubToken();
-      setIsLoading(false);
-      setLoadingSubmit(false);
-    }
-  };
-
-  const generateLlamaCppCompletion = async (prompt: string) => {
-    if (!llamacpp.isModelLoaded) {
-      throw new Error("No llama.cpp model loaded. Please load a model first.");
-    }
-
-    const messages = storedMessages.slice(0, -1)
-      .filter(msg => msg.content)
-      .map(msg => ({
-        role: msg.role,
-        content: typeof msg.content === 'string' 
-          ? msg.content 
-          : Array.isArray(msg.content)
-            ? msg.content.map(c => c.type === 'text' ? c.text : '').join(' ')
-            : ''
-      }));
-
-    messages.push({ role: "user", content: prompt });
-
-    let systemContent = "";
-    if (isCustomizedInstructionsEnabled && customizedInstructions) {
-      systemContent = customizedInstructions;
-    }
-    
-    if (systemContent) {
-      messages.unshift({
-        role: "system",
-        content: systemContent
-      });
-    }
-
-    let assistantMessage = "";
-
-    const unsubToken = window.offlineAPI?.llamacpp?.onChatToken((token: string) => {
-      assistantMessage += token;
-      setStoredMessages((message) => [
-        ...message.slice(0, -1),
-        { role: "assistant", content: assistantMessage },
-      ]);
-    });
-
-    try {
-      const response = await llamacpp.chat(messages);
-      
-      setStoredMessages((message) => [
-        ...message.slice(0, -1),
-        { role: "assistant", content: response },
-      ]);
-    } finally {
-      if (unsubToken) unsubToken();
-      setIsLoading(false);
-      setLoadingSubmit(false);
-    }
-  };
-
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     // Prevent submission if already loading or processing
     if (isLoading || isModelLoading) {
@@ -307,8 +194,7 @@ export default function Home() {
     setIsLoading(true);
     setLoadingError(null);
 
-    // Validate backend availability
-    if (selectedBackend === 'webllm' && !webLLMHelper) {
+    if (!webLLMHelper) {
       setIsLoading(false);
       setLoadingError("WebLLM is not initialized. Please refresh the page.");
       return;
@@ -347,92 +233,72 @@ export default function Home() {
     setStoredMessages((message) => [
       ...message,
       userMessage,
-      { role: "assistant", content: "" },
     ]);
 
     setInput("");
 
     try {
-      setLoadingSubmit(true);
-
       const enhancedInput = currentInput;
 
-      if (selectedBackend === 'ollama') {
-        if (!window.offlineAPI?.ollama || !ollama.isRunning || !ollama.currentModel) {
-          throw new Error("Ollama is not running or no model is selected. Please check your Ollama setup.");
-        }
-        
-        await generateOllamaCompletion(enhancedInput);
-      } else if (selectedBackend === 'llamacpp') {
-        if (!window.offlineAPI?.llamacpp || !llamacpp.isModelLoaded) {
-          throw new Error("llama.cpp model not loaded. Please load a model first.");
-        }
-        
-        await generateLlamaCppCompletion(enhancedInput);
-      } else {
-        if (!loadedEngine) {
-          // Load engine with retry support
-          setIsModelLoading(true);
-          try {
-            loadedEngine = await webLLMHelper.initialize(selectedModel);
-            setIsModelLoading(false);
-          } catch (e) {
-            setIsLoading(false);
-            setIsModelLoading(false);
-            
-            const errorMessage = e instanceof Error ? e.message : String(e);
-            setLoadingError(errorMessage);
+      if (!loadedEngine) {
+        setIsModelLoading(true);
+        try {
+          loadedEngine = await webLLMHelper.initialize(selectedModel);
+        } catch (e) {
+          setIsLoading(false);
+          setIsModelLoading(false);
 
-            // Don't show error message in chat if it was canceled
-            if (!errorMessage?.includes?.("CANCELED")) {
-              setStoredMessages((message) => [
-                ...message.slice(0, -1),
-              ]);
-            }
-            return;
+          const errorMessage = e instanceof Error ? e.message : String(e);
+          setLoadingError(errorMessage);
+          return;
+        }
+        setIsModelLoading(false);
+      }
+
+      setLoadingSubmit(true);
+      setStoredMessages((message) => [
+        ...message,
+        { role: "assistant", content: "" },
+      ]);
+
+      const existingFile = localStorage.getItem(`chatFile_${chatId}`);
+      if (existingFile) {
+        const { fileText, fileType, fileName } = JSON.parse(existingFile);
+
+        setStoredMessages((message) => [
+          ...message.slice(0, -1),
+          { role: "assistant", content: "", isProcessingDocument: true },
+        ]);
+
+        try {
+          const qaPrompt = await webLLMHelper.processDocuments(
+            fileText,
+            fileType,
+            fileName,
+            currentInput
+          );
+          if (!qaPrompt) {
+            throw new Error("Failed to process document");
           }
-        }
-
-        // If file is uploaded and text is extracted, process the documents
-        const existingFile = localStorage.getItem(`chatFile_${chatId}`);
-        if (existingFile) {
-          const { fileText, fileType, fileName } = JSON.parse(existingFile);
-
           setStoredMessages((message) => [
             ...message.slice(0, -1),
-            { role: "assistant", content: "", isProcessingDocument: true },
+            { role: "assistant", content: "", isProcessingDocument: false },
           ]);
-
-          try {
-            const qaPrompt = await webLLMHelper.processDocuments(
-              fileText,
-              fileType,
-              fileName,
-              currentInput
-            );
-            if (!qaPrompt) {
-              throw new Error("Failed to process document");
-            }
-            setStoredMessages((message) => [
-              ...message.slice(0, -1),
-              { role: "assistant", content: "", isProcessingDocument: false },
-            ]);
-            await generateCompletion(loadedEngine, qaPrompt);
-          } catch (docError) {
-            console.error("Document processing error:", docError);
-            setStoredMessages((message) => [
-              ...message.slice(0, -1),
-              {
-                role: "assistant",
-                content: `⚠️ Failed to process document: ${docError instanceof Error ? docError.message : 'Unknown error'}. Answering without document context.`,
-              },
-              { role: "assistant", content: "" },
-            ]);
-            await generateCompletion(loadedEngine, enhancedInput);
-          }
-        } else {
+          await generateCompletion(loadedEngine, qaPrompt);
+        } catch (docError) {
+          console.error("Document processing error:", docError);
+          setStoredMessages((message) => [
+            ...message.slice(0, -1),
+            {
+              role: "assistant",
+              content: `⚠️ Failed to process document: ${docError instanceof Error ? docError.message : 'Unknown error'}. Answering without document context.`,
+            },
+            { role: "assistant", content: "" },
+          ]);
           await generateCompletion(loadedEngine, enhancedInput);
         }
+      } else {
+        await generateCompletion(loadedEngine, enhancedInput);
       }
     } catch (e) {
       setIsLoading(false);
@@ -512,57 +378,49 @@ export default function Home() {
     setInput("");
 
     try {
-      // Handle different backends
-      if (selectedBackend === 'ollama') {
-        await generateOllamaCompletion(lastMsg.toString());
-      } else if (selectedBackend === 'llamacpp') {
-        await generateLlamaCppCompletion(lastMsg.toString());
-      } else {
-        // WebLLM backend
-        if (!engine) {
-          console.log("No WebLLM engine available for regeneration");
-          setIsLoading(false);
-          setLoadingSubmit(false);
-          setLoadingError("No model loaded. Please wait for the model to load.");
-          return;
-        }
+      if (!engine) {
+        console.log("No WebLLM engine available for regeneration");
+        setIsLoading(false);
+        setLoadingSubmit(false);
+        setLoadingError("No model loaded. Please wait for the model to load.");
+        return;
+      }
 
-        const existingFile = localStorage.getItem(`chatFile_${chatId}`);
-        if (existingFile) {
-          const { fileText, fileType, fileName } = JSON.parse(existingFile);
+      const existingFile = localStorage.getItem(`chatFile_${chatId}`);
+      if (existingFile) {
+        const { fileText, fileType, fileName } = JSON.parse(existingFile);
+
+        setStoredMessages((message) => [
+          ...message.slice(0, -1),
+          { role: "assistant", content: "", isProcessingDocument: true },
+        ]);
+
+        try {
+          const qaPrompt = await webLLMHelper.processDocuments(
+            fileText,
+            fileType,
+            fileName,
+            lastMsg.toString()
+          );
+          if (!qaPrompt) {
+            throw new Error("Failed to process document");
+          }
 
           setStoredMessages((message) => [
             ...message.slice(0, -1),
-            { role: "assistant", content: "", isProcessingDocument: true },
+            { role: "assistant", content: "", isProcessingDocument: false },
           ]);
-
-          try {
-            const qaPrompt = await webLLMHelper.processDocuments(
-              fileText,
-              fileType,
-              fileName,
-              lastMsg.toString()
-            );
-            if (!qaPrompt) {
-              throw new Error("Failed to process document");
-            }
-
-            setStoredMessages((message) => [
-              ...message.slice(0, -1),
-              { role: "assistant", content: "", isProcessingDocument: false },
-            ]);
-            await generateCompletion(engine, qaPrompt);
-          } catch (docError) {
-            console.error("Document processing error during regeneration:", docError);
-            setStoredMessages((message) => [
-              ...message.slice(0, -1),
-              { role: "assistant", content: "" },
-            ]);
-            await generateCompletion(engine, lastMsg.toString());
-          }
-        } else {
+          await generateCompletion(engine, qaPrompt);
+        } catch (docError) {
+          console.error("Document processing error during regeneration:", docError);
+          setStoredMessages((message) => [
+            ...message.slice(0, -1),
+            { role: "assistant", content: "" },
+          ]);
           await generateCompletion(engine, lastMsg.toString());
         }
+      } else {
+        await generateCompletion(engine, lastMsg.toString());
       }
     } catch (e) {
       console.error("Regeneration error:", e);

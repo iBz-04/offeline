@@ -1,13 +1,11 @@
-import { Model, Models } from "@/lib/models";
-import * as webllm from "@mlc-ai/web-llm";
+import { DefaultModel, findModelByName, Model } from "@/lib/models";
+import type { MLCEngineInterface } from "@mlc-ai/web-llm";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { Document } from "langchain/document";
 import { MessageWithFiles } from "@/lib/types";
 
 const LOCAL_SELECTED_MODEL = "selectedModel";
-
-export type LLMBackend = 'webllm' | 'ollama' | 'llamacpp';
 
 export interface InferenceSettings {
   contextWindowSize: number;
@@ -18,14 +16,15 @@ export interface InferenceSettings {
 
 interface State {
   selectedModel: Model;
-  selectedBackend: LLMBackend;
   input: string;
   modelHasChanged: boolean;
   isLoading: boolean;
   isModelLoading: boolean;
+  modelLoadProgress: number | null;
+  modelLoadStatus: string | null;
   loadingError: string | null;
   messages: MessageWithFiles[];
-  engine: webllm.MLCEngineInterface | null;
+  engine: MLCEngineInterface | null;
   fileText: Document<Record<string, any>>[] | null;
   files: File[] | undefined;
   base64Images: string[] | null;
@@ -34,7 +33,6 @@ interface State {
 
 interface Actions {
   setSelectedModel: (model: Model) => void;
-  setSelectedBackend: (backend: LLMBackend) => void;
   handleInputChange: (
     e:
       | React.ChangeEvent<HTMLInputElement>
@@ -44,13 +42,15 @@ interface Actions {
   setModelHasChanged: (changed: boolean) => void;
   setIsLoading: (loading: boolean) => void;
   setIsModelLoading: (loading: boolean) => void;
+  setModelLoadProgress: (progress: number | null) => void;
+  setModelLoadStatus: (status: string | null) => void;
   setLoadingError: (error: string | null) => void;
   setMessages: (
     fn: (
       messages: MessageWithFiles[]
     ) => MessageWithFiles[]
   ) => void;
-  setEngine: (engine: webllm.MLCEngineInterface | null) => void;
+  setEngine: (engine: MLCEngineInterface | null) => void;
   setFileText: (text: Document<Record<string, any>>[] | null) => void;
   setFiles: (files: File[] | undefined) => void;
   setBase64Images: (base64Images: string[] | null) => void;
@@ -58,27 +58,15 @@ interface Actions {
   resetState: () => void;
 }
 
-// Helper to detect if running in Electron
-const isElectron = () => {
-  return typeof window !== 'undefined' && !!(window as any).offlineAPI;
-};
-
-// Get default backend based on environment
-const getDefaultBackend = (): LLMBackend => {
-  return isElectron() ? 'ollama' : 'webllm';
-};
-
 const useChatStore = create<State & Actions>()(
   persist(
     (set) => ({
-      selectedModel: Models[1] || Models[0], // Fallback to first model if Models[1] doesn't exist
-      selectedBackend: getDefaultBackend(), // Ollama for desktop, WebLLM for web
+      selectedModel: DefaultModel,
       setSelectedModel: (model: Model) =>
         set((state: State) => ({
           selectedModel: state.selectedModel !== model ? model : state.selectedModel,
           modelHasChanged: state.selectedModel !== model,
         })),
-      setSelectedBackend: (backend: LLMBackend) => set({ selectedBackend: backend }),
 
       input: "",
       handleInputChange: (
@@ -96,6 +84,12 @@ const useChatStore = create<State & Actions>()(
 
       isModelLoading: false,
       setIsModelLoading: (loading) => set({ isModelLoading: loading }),
+
+      modelLoadProgress: null,
+      setModelLoadProgress: (progress) => set({ modelLoadProgress: progress }),
+
+      modelLoadStatus: null,
+      setModelLoadStatus: (status) => set({ modelLoadStatus: status }),
 
       loadingError: null,
       setLoadingError: (error) => set({ loadingError: error }),
@@ -126,6 +120,8 @@ const useChatStore = create<State & Actions>()(
       resetState: () => set({
         isLoading: false,
         isModelLoading: false,
+        modelLoadProgress: null,
+        modelLoadStatus: null,
         loadingError: null,
         input: "",
         fileText: null,
@@ -135,28 +131,16 @@ const useChatStore = create<State & Actions>()(
     }),
     {
       name: LOCAL_SELECTED_MODEL,
-      // Only save selectedModel, selectedBackend, and inferenceSettings to local storage with partialize
       partialize: (state) => ({
         selectedModel: state.selectedModel,
-        selectedBackend: state.selectedBackend,
         inferenceSettings: state.inferenceSettings,
       }),
       storage: createJSONStorage(() => localStorage),
       onRehydrateStorage: () => (state) => {
-        // Ensure selectedModel is always valid after rehydration
-        if (!state?.selectedModel || !state.selectedModel.name) {
-          console.warn('Invalid selectedModel after rehydration, resetting to default');
-          state!.selectedModel = Models[1] || Models[0];
-        }
-        // Only set default backend if no backend was previously saved
-        // This allows users to switch backends and have it persist
-        if (!state?.selectedBackend) {
-          const defaultBackend = getDefaultBackend();
-          console.log('No saved backend, setting default:', defaultBackend);
-          state!.selectedBackend = defaultBackend;
-        } else {
-          console.log('Using saved backend:', state.selectedBackend);
-        }
+        const persistedModel = state?.selectedModel?.name
+          ? findModelByName(state.selectedModel.name)
+          : undefined;
+        state!.selectedModel = persistedModel ?? DefaultModel;
       },
     }
   )

@@ -11,7 +11,7 @@ import {
 
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import InferenceSettingsForm from "./inference-settings-form";
-import { Gauge } from "lucide-react";
+import { Bot } from "@econic";
 import React from "react";
 
 interface InferenceSettingsDialogProps {
@@ -28,7 +28,7 @@ export default function InferenceSettingsDialog({
       <DialogTrigger className="w-full">
         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
           <div className="flex w-full gap-2 p-1 items-center cursor-pointer">
-            <Gauge className="w-4 h-4" />
+            <Bot className="w-4 h-4" />
             Inference Settings
           </div>
         </DropdownMenuItem>
@@ -37,8 +37,8 @@ export default function InferenceSettingsDialog({
         <DialogHeader className="space-y-4">
           <DialogTitle>Inference Settings</DialogTitle>
           <DialogDescription>
-            Configure inference parameters for speed and quality. Lower values = faster responses.
-            Changes take effect on the next message.
+            Configure inference parameters.
+
           </DialogDescription>
           <InferenceSettingsForm setOpen={setOpen} />
         </DialogHeader>

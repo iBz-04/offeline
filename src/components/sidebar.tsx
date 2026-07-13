@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { MoreHorizontal, SquarePen, Trash2, Pencil } from "lucide-react";
+import { MoreHorizontal, DocAdd, Trash2, Transform } from "@econic";
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Message } from "ai/react";
@@ -27,7 +27,7 @@ import useChatStore from "@/hooks/useChatStore";
 import useMemoryStore from "@/hooks/useMemoryStore";
 import { Input } from "./ui/input";
 import { MessageWithFiles } from "@/lib/types";
-import { ChatCompletionContentPart, ChatCompletionContentPartText } from "@mlc-ai/web-llm";
+import type { ChatCompletionContentPart, ChatCompletionContentPartText } from "@mlc-ai/web-llm";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -172,7 +172,7 @@ export function Sidebar({ isCollapsed, chatId, stopAction }: SidebarProps) {
   }
 
   return (
-    <div className="relative overflow-hidden justify-between group md:bg-accent md:dark:bg-card flex flex-col h-full gap-4 ">
+    <div className="relative overflow-hidden justify-between group flex flex-col h-full gap-4 bg-background">
       <div className=" flex flex-col justify-between p-2 max-h-fit overflow-y-auto ">
         <Button
           onClick={handleNewChat}
@@ -182,16 +182,15 @@ export function Sidebar({ isCollapsed, chatId, stopAction }: SidebarProps) {
           <div className="flex gap-3 items-center ">
             <div className="relative w-12 h-12 flex items-center justify-center -my-2">
               <Image
-                src="/cat.png"
-                alt="AI"
+                src="/offeline.png"
+                alt="Offeline"
                 width={64}
                 height={64}
-                className="invert dark:invert-0"
               />
             </div>
             New chat
           </div>
-          <SquarePen size={18} className="shrink-0 w-5 h-5" />
+          <DocAdd size={18} className="shrink-0 w-5 h-5" />
         </Button>
 
         <div className="flex flex-col pt-10 gap-2">
@@ -246,10 +245,10 @@ export function Sidebar({ isCollapsed, chatId, stopAction }: SidebarProps) {
                             setRenameOpen(true); 
                           }} 
                           variant="ghost" 
-                          className="w-full flex gap-2 hover:text-black text-black dark:text-white justify-start items-center"
+                          className="w-full flex gap-2 hover:text-foreground text-foreground justify-start items-center"
                         >
                           <div className="flex justify-end gap-2">
-                            <Pencil className="shrink-0 w-4 h-4" />
+                            <Transform className="shrink-0 w-4 h-4" />
                             Rename chat
                           </div>
                         </Button>
@@ -328,7 +327,7 @@ export function Sidebar({ isCollapsed, chatId, stopAction }: SidebarProps) {
         </div>
       </div>
 
-      <div className="justify-end p-2 border-t">
+      <div className="justify-end p-2 pt-4">
         <UserSettings />
       </div>
     </div >

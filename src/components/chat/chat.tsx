@@ -4,8 +4,9 @@ import React from "react";
 import ChatTopbar from "./chat-topbar";
 import ChatList from "./chat-list";
 import ChatBottombar from "./chat-bottombar";
+import { ModelLoadingBar } from "../ui/model-loading-bar";
 import { ChatProps } from "@/lib/types";
-import { Cross2Icon, FileTextIcon } from "@radix-ui/react-icons";
+import { Cross2Icon, FileTextIcon } from "@econic";
 import useChatStore from "@/hooks/useChatStore";
 import {
   Dialog,
@@ -22,7 +23,6 @@ export default function Chat({
   stopAction,
   chatId,
   loadingSubmit,
-  isMobile,
   messages,
   onRegenerate,
   onRetry,
@@ -48,7 +48,6 @@ export default function Chat({
           handleSubmitAction={handleSubmitAction}
           loadingSubmit={loadingSubmit}
           stopAction={stopAction}
-          isMobile={isMobile}
           onRegenerate={onRegenerate}
           onRetry={onRetry}
           loadingError={loadingError}
@@ -59,7 +58,7 @@ export default function Chat({
       {files && fileText && (
         <div className="shrink-0 ml-6 -mt-2 relative w-fit max-w-full top-4">
           <Dialog open={open} onOpenChange={setOpen}>
-            <div className=" px-2 py-1.5 h-11 bg-muted-foreground/20 flex w-fit flex-col truncate gap-2 p-1 border-t border-x rounded-tl-md rounded-tr-md">
+            <div className="px-3 py-2 h-11 bg-card flex w-fit flex-col truncate gap-2 rounded-2xl">
               <div className="flex text-sm">
                 {files.map((file) => (
                   <div key={file.name} className="flex items-center gap-1.5">
@@ -107,6 +106,7 @@ export default function Chat({
       )}
 
       <div className="shrink-0">
+        <ModelLoadingBar />
         <ChatBottombar
           files={files}
           setFiles={setFiles}

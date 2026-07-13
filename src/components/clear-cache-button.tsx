@@ -2,7 +2,7 @@
 
 import { Button } from "./ui/button";
 import { useState } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2 } from "@econic";
 import { toast } from "sonner";
 import { clearAppCache } from "@/lib/cache-manager";
 

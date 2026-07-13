@@ -3,7 +3,7 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { Command } from "cmdk";
-import { Search } from "lucide-react";
+import { Search } from "@econic";
 import { useEffect, useState } from "react";
 
 interface CommandPaletteProps {
@@ -28,7 +28,7 @@ export function CommandPalette({ onSelect }: CommandPaletteProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="p-0 overflow-hidden">
         <Command className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0">
-          <div className="flex items-center border-b px-3">
+          <div className="flex items-center px-3 pb-2">
             <Search className="w-4 h-4 mr-2 shrink-0 opacity-50" />
             <Command.Input 
               placeholder="Type a command or search..." 

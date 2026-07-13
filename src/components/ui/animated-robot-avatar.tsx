@@ -5,13 +5,13 @@ import Image from "next/image";
 
 export function AnimatedRobotAvatar({ className }: { className?: string }) {
   return (
-    <div className={cn("relative w-12 h-12", className)}>
+    <div className={cn("relative size-full shrink-0", className)}>
       <Image
-        src="/cat.png"
-        alt="AI"
-        width={48}
-        height={48}
-        className="w-full h-full invert dark:invert-0"
+        src="/offeline.png"
+        alt="Offeline"
+        fill
+        sizes="40px"
+        className="object-contain"
       />
       <div className={cn(
         "absolute inset-0 bg-gradient-to-tr from-purple-500/20 to-transparent rounded-full",

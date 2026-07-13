@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import ButtonWithTooltip from "./button-with-tooltip";
 import { Button } from "./ui/button";
-import { FileDown } from "lucide-react";
+import { FileDown } from "@econic";
 import useMemoryStore from "@/hooks/useMemoryStore";
 import { useEffect, useState } from "react";
 import CodeDisplayBlock from "./code-display-block";

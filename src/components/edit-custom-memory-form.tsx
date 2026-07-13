@@ -21,7 +21,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "./ui/tooltip";
-import { InfoCircledIcon } from "@radix-ui/react-icons";
+import { InfoCircledIcon } from "@econic";
 import useMemoryStore from "@/hooks/useMemoryStore";
 import { Switch } from "./ui/switch";
 
@@ -103,7 +103,7 @@ export default function EditCustomMemoryForm({
                       </FormDescription>
                       <TextareaAutosize
                         itemType="text"
-                        className="w-full text-sm p-2 border border-gray-300 rounded-md resize-none min-h-40 max-h-40 bg-inherit"
+                        className="w-full text-sm p-3 rounded-2xl bg-card resize-none min-h-40 max-h-40"
                         defaultValue={customisedInstructions}
                         onChange={(e) => handleChange(e)}
                       />

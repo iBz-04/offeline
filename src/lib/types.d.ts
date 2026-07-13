@@ -13,7 +13,6 @@ export interface ChatProps {
   ) => void;
   loadingSubmit?: boolean;
   stopAction: () => void;
-  isMobile?: boolean;
   onRegenerate?: () => void;
   onRetry?: () => void;
   loadingError?: string | null;

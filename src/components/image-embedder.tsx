@@ -3,7 +3,7 @@
 import React, { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { Button } from "./ui/button";
-import { ImageIcon } from "lucide-react";
+import { ImageIcon } from "@econic";
 
 interface MultiImagePickerProps {
   onImagesPick: (base64Images: string[]) => void;

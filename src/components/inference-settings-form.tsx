@@ -16,7 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import useChatStore, { InferenceSettings } from "@/hooks/useChatStore";
 import { toast } from "sonner";
-import { Zap, Database, Thermometer, Target } from "lucide-react";
+import { Zap, Database, Thermometer, Target } from "@econic";
 
 const inferenceSettingsSchema = z.object({
   contextWindowSize: z.coerce

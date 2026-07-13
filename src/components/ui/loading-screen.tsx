@@ -46,11 +46,10 @@ export function LoadingScreen({ isLoading }: LoadingScreenProps) {
       <div className="flex flex-col items-center gap-4">
         {/* Simple logo */}
         <Image
-          src="/cat.png"
-          alt="AI"
+          src="/offeline.png"
+          alt="Offeline"
           width={64}
           height={64}
-          className="invert dark:invert-0"
         />
         
         {/* Loading text - retro style */}
@@ -59,15 +58,15 @@ export function LoadingScreen({ isLoading }: LoadingScreenProps) {
         </div>
         
         {/* Vintage segmented progress bar */}
-        <div className="flex items-center gap-1 border-2 border-foreground p-1">
+        <div className="flex items-center gap-1 bg-card p-2 rounded-2xl">
           {Array.from({ length: 10 }).map((_, index) => (
             <div
               key={index}
               className={cn(
-                "w-6 h-8 border border-foreground transition-colors duration-100",
+                "w-6 h-8 rounded-sm transition-colors duration-100",
                 index < Math.floor(progress / 10)
                   ? "bg-foreground"
-                  : "bg-background"
+                  : "bg-secondary"
               )}
             />
           ))}

@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
-import { X } from "lucide-react";
+import { X } from "@econic";
 import { useEffect, useState } from "react";
 
 interface ToastProps {
@@ -46,8 +46,8 @@ export function Toast({ message, type = "info", duration = 3000, onClose }: Toas
           variants={variants}
           className={cn(
             "fixed bottom-4 right-4 z-50",
-            "flex items-center gap-2 px-4 py-2 rounded-lg",
-            "text-white shadow-lg",
+            "flex items-center gap-2 px-4 py-2 rounded-2xl",
+            "text-white",
             colors[type]
           )}
         >

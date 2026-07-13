@@ -1,10 +1,19 @@
-import { pipeline, env } from "@xenova/transformers";
 import { Embeddings, EmbeddingsParams } from "@langchain/core/embeddings";
 
-// Configure transformers to use Hugging Face CDN instead of local models
-if (typeof window !== 'undefined') {
-  env.allowLocalModels = false;
-  env.allowRemoteModels = true;
+type TransformersModule = typeof import("@xenova/transformers");
+
+let transformersModule: TransformersModule | null = null;
+
+async function getTransformers(): Promise<TransformersModule> {
+  if (typeof window === "undefined") {
+    throw new Error("Embeddings are only available in the browser");
+  }
+  if (!transformersModule) {
+    transformersModule = await import("@xenova/transformers");
+    transformersModule.env.allowLocalModels = false;
+    transformersModule.env.allowRemoteModels = true;
+  }
+  return transformersModule;
 }
 
 export interface XenovaTransformersEmbeddingsParams extends EmbeddingsParams {
@@ -25,6 +34,7 @@ export class XenovaTransformersEmbeddings
 
   async _embed(texts: string[]): Promise<number[][]> {
     if (!this.client) {
+      const { pipeline } = await getTransformers();
       this.client = await pipeline("feature-extraction", this.model);
     }
 
@@ -57,7 +67,7 @@ let embeddingsInstance: XenovaTransformersEmbeddings | null = null;
 export async function getEmbeddingsInstance(): Promise<XenovaTransformersEmbeddings> {
   if (!embeddingsInstance) {
     embeddingsInstance = new XenovaTransformersEmbeddings();
-    await embeddingsInstance._embed(["initialization"]); // Initialize the client
+    await embeddingsInstance._embed(["initialization"]);
   }
   return embeddingsInstance;
 }

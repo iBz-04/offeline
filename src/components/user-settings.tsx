@@ -13,6 +13,9 @@ import { Skeleton } from "./ui/skeleton";
 import UserSettingsDialog from "./user-settings-dialog";
 import CustomMemoryDialog from "./custom-memory-dialog";
 import InferenceSettingsDialog from "./inference-settings-dialog";
+import InfoPageDialog from "./info-page-dialog";
+import AboutDialog from "./about-dialog";
+import { privacyPage } from "@/lib/info-pages";
 
 export default function UserSettings() {
   const [name, setName] = useState("");
@@ -20,6 +23,8 @@ export default function UserSettings() {
   const [openCustomMemoryDialog, setOpenCustomMemoryDialog] = useState(false);
   const [openUserSettingsDialog, setOpenUserSettingsDialog] = useState(false);
   const [openInferenceSettingsDialog, setOpenInferenceSettingsDialog] = useState(false);
+  const [openAboutDialog, setOpenAboutDialog] = useState(false);
+  const [openPrivacyDialog, setOpenPrivacyDialog] = useState(false);
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -77,7 +82,12 @@ export default function UserSettings() {
           </div>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="p-2">
+      <DropdownMenuContent
+        side="top"
+        align="start"
+        sideOffset={8}
+        className="w-56 p-2"
+      >
         <UserSettingsDialog
           setOpen={setOpenUserSettingsDialog}
           open={openUserSettingsDialog}
@@ -89,6 +99,12 @@ export default function UserSettings() {
         <InferenceSettingsDialog
           setOpen={setOpenInferenceSettingsDialog}
           open={openInferenceSettingsDialog}
+        />
+        <AboutDialog setOpen={setOpenAboutDialog} open={openAboutDialog} />
+        <InfoPageDialog
+          setOpen={setOpenPrivacyDialog}
+          open={openPrivacyDialog}
+          config={privacyPage}
         />
       </DropdownMenuContent>
     </DropdownMenu>

@@ -1,0 +1,25 @@
+{
+  "name": "Offeline",
+  "short_name": "Offeline",
+  "description": "Chat with llms and slms privately, and locally on your machine and browser",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#faf8f3",
+  "theme_color": "#faf8f3",
+  "icons": [
+    {
+      "src": "/offeline.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/offeline.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

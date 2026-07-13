@@ -1,4 +1,4 @@
-const PRESERVED_KEYS = ['chatty_user', 'theme'];
+const PRESERVED_KEYS = ['chatty_user'];
 
 export const clearAppCache = async () => {
   try {

@@ -3,8 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Sidebar } from "../sidebar";
 import { AnimatePresence, motion } from "framer-motion";
-import { DividerVerticalIcon } from "@radix-ui/react-icons";
-import { ChevronRightIcon, Download, SquarePen } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon, DocAdd } from "@econic";
 import {
   Tooltip,
   TooltipContent,
@@ -82,16 +81,24 @@ export default function ChatLayout({
         <div
           key="divider"
           className=" items-center relative left-1 hidden md:flex"
-          onClick={() => setIsCollapsed(!isCollapsed)}
         >
           <TooltipProvider delayDuration={0}>
             <Tooltip>
               <TooltipTrigger asChild>
-                {isCollapsed ? (
-                  <ChevronRightIcon className="h-6 w-6 cursor-pointer hover:text-muted-foreground" />
-                ) : (
-                  <DividerVerticalIcon className="h-6 w-6 cursor-pointer hover:text-muted-foreground" />
-                )}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                  onClick={() => setIsCollapsed(!isCollapsed)}
+                  className="h-8 w-8 rounded-full"
+                >
+                  {isCollapsed ? (
+                    <ChevronRightIcon className="h-6 w-6" />
+                  ) : (
+                    <ChevronLeftIcon className="h-6 w-6" />
+                  )}
+                </Button>
               </TooltipTrigger>
               <TooltipContent side="right">
                 {isCollapsed ? "Expand" : "Collapse"} sidebar
@@ -121,7 +128,7 @@ export default function ChatLayout({
                   handleNewChat();
                 }}
               >
-                <SquarePen size={18} className="shrink-0 w-5 h-5" />
+                <DocAdd size={18} className="shrink-0 w-5 h-5" />
               </Button>
             </ButtonWithTooltip>
           </motion.div>

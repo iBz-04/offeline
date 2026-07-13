@@ -1,7 +1,6 @@
 import type { Config } from "tailwindcss"
 
 const config = {
-  darkMode: ["class"],
   content: [
     './pages/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
@@ -18,6 +17,22 @@ const config = {
       },
     },
     extend: {
+      height: {
+        app: "var(--app-height, 100dvh)",
+      },
+      minHeight: {
+        app: "var(--app-height, 100dvh)",
+      },
+      spacing: {
+        "safe-top": "env(safe-area-inset-top)",
+        "safe-bottom": "env(safe-area-inset-bottom)",
+        "safe-left": "env(safe-area-inset-left)",
+        "safe-right": "env(safe-area-inset-right)",
+      },
+      fontFamily: {
+        body: ["var(--font-fredoka)", "sans-serif"],
+        ui: ["var(--font-quicksand)", "sans-serif"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -52,6 +67,7 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        send: "hsl(var(--send))",
       },
       borderRadius: {
         lg: "var(--radius)",

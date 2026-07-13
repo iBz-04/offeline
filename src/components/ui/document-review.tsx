@@ -1,4 +1,4 @@
-import { FileText } from "lucide-react";
+import { FileText } from "@econic";
 import "./document-review.css";
 
 export default function DocumentReview() {

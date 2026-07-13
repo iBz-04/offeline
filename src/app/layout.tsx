@@ -1,16 +1,24 @@
 import type { Metadata } from "next";
-import { GeistSans } from "geist/font/sans";
+import { Fredoka, Quicksand } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { WebLLMProvider } from "@/providers/web-llm-provider";
-import { OllamaProvider } from "@/providers/ollama-provider";
-import { LlamaCppProvider } from "@/providers/llama-cpp-provider";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { Analytics } from "@vercel/analytics/next";
 import { Suspense } from "react";
 import { LoadingScreenWrapper } from "@/components/loading-screen-wrapper";
-import { ElectronLayoutWrapper } from "@/components/electron-layout-wrapper";
+import { MobileViewportSync } from "@/components/mobile-viewport-sync";
+
+const fredoka = Fredoka({
+  subsets: ["latin"],
+  variable: "--font-fredoka",
+});
+
+const quicksand = Quicksand({
+  subsets: ["latin"],
+  variable: "--font-quicksand",
+});
 
 const metainfo = {
   name: "Offeline",
@@ -28,8 +36,14 @@ export const metadata: Metadata = {
   },
   description: metainfo.description,
   icons: {
-    icon: "/favicon.ico",
-    apple: "/favicon.ico",
+    icon: "/offeline.png",
+    apple: "/offeline.png",
+  },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: metainfo.name,
   },
   authors: [
     {
@@ -57,7 +71,10 @@ export const metadata: Metadata = {
 export const viewport = {
   width: "device-width",
   initialScale: 1,
-};
+  viewportFit: "cover",
+  themeColor: "#faf8f3",
+  interactiveWidget: "resizes-content",
+} as const;
 
 export default function RootLayout({
   children,
@@ -65,7 +82,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className="light" suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -81,22 +98,28 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${GeistSans.className} h-screen w-screen overflow-hidden`}>
+      <body className={`${fredoka.variable} ${quicksand.variable} font-body h-app w-full overflow-hidden touch-manipulation`}>
+        <MobileViewportSync />
         <LoadingScreenWrapper>
-          <LlamaCppProvider>
-            <OllamaProvider>
-              <WebLLMProvider>
-                <ThemeProvider attribute="class" defaultTheme="system">
-                  <ElectronLayoutWrapper>
-                    <Suspense>
-                      {children}
-                    </Suspense>
-                  </ElectronLayoutWrapper>
-                  <Toaster position="top-right" />
-                </ThemeProvider>
-              </WebLLMProvider>
-            </OllamaProvider>
-          </LlamaCppProvider>
+          <WebLLMProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="light"
+              forcedTheme="light"
+              enableSystem={false}
+              disableTransitionOnChange
+            >
+              <div className="h-app w-full flex flex-col overflow-hidden">
+                <Suspense>
+                  {children}
+                </Suspense>
+              </div>
+              <Toaster
+                position="top-right"
+                className="!top-[max(1rem,env(safe-area-inset-top))] !right-[max(1rem,env(safe-area-inset-right))]"
+              />
+            </ThemeProvider>
+          </WebLLMProvider>
         </LoadingScreenWrapper>
         <Analytics />
       </body>

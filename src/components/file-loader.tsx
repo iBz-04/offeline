@@ -7,9 +7,7 @@ import { WebPDFLoader } from "langchain/document_loaders/web/pdf";
 import { useDropzone } from "react-dropzone";
 import { Button } from "./ui/button";
 import { Document } from "langchain/document";
-import { FileText, X } from "lucide-react";
-import { Cross2Icon } from "@radix-ui/react-icons";
-import { PaperclipIcon } from "lucide-react";
+import { FileText, X, Cross2Icon, PaperclipIcon } from "@econic";
 import { toast } from "sonner";
 import useMemoryStore from "@/hooks/useMemoryStore";
 

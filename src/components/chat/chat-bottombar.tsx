@@ -13,15 +13,13 @@ import {
 import Image from "next/image";
 import TextareaAutosize from "react-textarea-autosize";
 import { AnimatePresence } from "framer-motion";
-import { Cross2Icon, StopIcon } from "@radix-ui/react-icons";
+import { Cross2Icon, StopIcon, Mic, ArrowUp } from "@econic";
 import { ChatProps } from "@/lib/types";
 import useChatStore from "@/hooks/useChatStore";
 import FileLoader from "../file-loader";
-import { Mic, Send, SendHorizonal } from "lucide-react";
 import useSpeechToText from "@/hooks/useSpeechRecognition";
+import { isCoarsePointer } from "@/lib/utils";
 import MultiImagePicker from "../image-embedder";
-import { Models } from "@/lib/models";
-
 interface MergedProps extends ChatProps {
   files: File[] | undefined;
   setFiles: (files: File[] | undefined) => void;
@@ -74,7 +72,7 @@ export default function ChatBottombar({
   };
 
   useEffect(() => {
-    if (inputRef.current) {
+    if (inputRef.current && !isCoarsePointer()) {
       inputRef.current.focus();
     }
   }, []);
@@ -86,16 +84,18 @@ export default function ChatBottombar({
   }, [isLoading]);
 
   return (
-    <div className="p-1 pb-2 flex justify-between w-full items-center gap-2">
+    <div
+      className={`flex w-full flex-col gap-1 px-3 pb-safe transition-opacity ${isModelLoading ? "pointer-events-none opacity-50" : ""}`}
+    >
       <AnimatePresence initial={false}>
-        <div className="w-full relative mb-2 items-center">
-          <div className="flex flex-col relative w-full bg-accent dark:bg-card rounded-lg">
+        <div className="relative w-full items-center">
+          <div className="relative flex w-full flex-col rounded-full bg-card">
             <div className="flex w-full">
               <form
                 onSubmit={handleSubmitAction}
-                className="w-full items-center flex relative gap-2"
+                className="relative flex w-full items-center gap-2"
               >
-                <div className="absolute flex left-3 z-10">
+                <div className="absolute flex left-4 z-10">
                   {/*
                   <MultiImagePicker 
                     disabled={!selectedModel?.name?.includes("vision")} 
@@ -110,6 +110,8 @@ export default function ChatBottombar({
                 </div>
                 <TextareaAutosize
                   autoComplete="off"
+                  enterKeyHint="send"
+                  inputMode="text"
                   value={
                     isListening ? (transcript.length ? transcript : "") : input
                   }
@@ -118,17 +120,18 @@ export default function ChatBottombar({
                   onChange={handleInputChange}
                   name="message"
                   placeholder={
-                    !isListening ? "Enter your prompt here" : "Listening"
+                    !isListening ? "What's on your mind?" : "Listening"
                   }
-                  className="max-h-24 px-28 bg-accent py-[22px] rounded-lg text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 w-full flex items-center h-16 resize-none overflow-hidden dark:bg-card"
+                  rows={1}
+                  className="flex min-h-[3.25rem] max-h-24 w-full resize-none items-center rounded-full bg-transparent pl-[3.75rem] pr-[5.5rem] py-[0.875rem] font-body text-base md:text-sm leading-6 placeholder:text-lg placeholder:md:text-xl placeholder:text-muted-foreground/45 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                 />
 
                 {!isLoading ? (
-                  <div className="flex absolute right-3 items-center">
+                  <div className="flex absolute right-4 items-center gap-1">
                     {isListening ? (
                       <div className="flex">
                         <Button
-                          className="shrink-0 relative rounded-full bg-blue-500/30 hover:bg-blue-400/30 "
+                          className="shrink-0 relative rounded-full bg-secondary hover:bg-secondary"
                           variant="ghost"
                           size="icon"
                           type="button"
@@ -136,7 +139,7 @@ export default function ChatBottombar({
                           disabled={isLoading}
                         >
                           <Mic className="w-5 h-5 " />
-                          <span className="animate-pulse absolute h-[120%] w-[120%] rounded-full bg-blue-500/30" />
+                          <span className="animate-pulse absolute h-[120%] w-[120%] rounded-full bg-secondary" />
                         </Button>
                       </div>
                     ) : (
@@ -158,11 +161,11 @@ export default function ChatBottombar({
                       type="submit"
                       disabled={isLoading || !input.trim() || isListening}
                     >
-                      <SendHorizonal className="w-5 h-5 " />
+                      <ArrowUp className="h-5 w-5 text-send" />
                     </Button>
                   </div>
                 ) : (
-                  <div className="flex absolute right-3 items-center">
+                  <div className="flex absolute right-4 items-center gap-1">
                     <Button
                       className="shrink-0 rounded-full"
                       variant="ghost"
@@ -216,6 +219,9 @@ export default function ChatBottombar({
           </div>
         </div>
       </AnimatePresence>
+      <p className="text-center text-xs text-muted-foreground/50">
+        AI can make mistakes
+      </p>
     </div>
   );
 }

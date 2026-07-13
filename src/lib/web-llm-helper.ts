@@ -4,7 +4,7 @@ import useChatStore from "@/hooks/useChatStore";
 import * as webllm from "@mlc-ai/web-llm";
 import { Model } from "./models";
 import { Document } from "langchain/document";
-import { XenovaTransformersEmbeddings, getEmbeddingsInstance } from "./embed";
+import { SYSTEM_PROMPT } from "./system-prompt";
 
 // Error types for better error handling
 export enum ModelLoadError {
@@ -44,6 +44,8 @@ export default class WebLLMHelper {
   
   private abortController: AbortController | null = null;
   private generationAbortController: AbortController | null = null;
+  private lastProgressUpdate = 0;
+  private lastProgressValue = -1;
   private readonly MAX_RETRIES = 3;
   private readonly RETRY_DELAY_MS = 2000;
   private loadedModelName: string | null = null;
@@ -88,14 +90,27 @@ export default class WebLLMHelper {
   private getSafeModelLimits(modelName: string): SafeModelLimits {
     const normalizedName = modelName.toLowerCase();
 
-    if (normalizedName.includes("3.8b") || normalizedName.includes("7b")) {
+    if (
+      normalizedName.includes("4b") ||
+      normalizedName.includes("3.8b") ||
+      normalizedName.includes("7b") ||
+      normalizedName.includes("8b") ||
+      normalizedName.includes("9b")
+    ) {
       return {
         maxContextWindowSize: 1024,
         maxTokens: 512,
       };
     }
 
-    if (normalizedName.includes("1.5b")) {
+    if (normalizedName.includes("3b")) {
+      return {
+        maxContextWindowSize: 2048,
+        maxTokens: 1024,
+      };
+    }
+
+    if (normalizedName.includes("1.5b") || normalizedName.includes("1.7b")) {
       return {
         maxContextWindowSize: 2048,
         maxTokens: 1024,
@@ -110,43 +125,48 @@ export default class WebLLMHelper {
 
   // Initialize progress callback with cancellation support
   private initProgressCallback = (report: webllm.InitProgressReport) => {
-    // Check if loading was canceled
     if (this.abortController?.signal.aborted) {
       return;
     }
 
     let progress = 0;
-    
-    if (typeof report.progress === 'number') {
+
+    if (typeof report.progress === "number") {
       progress = Math.round(report.progress * 100);
     } else if (report.text) {
-      // Fallback: parse from text if progress field doesn't exist
       const progressMatch = report.text.match(/(\d+)%/);
       if (progressMatch) {
         progress = parseInt(progressMatch[1], 10);
       }
     }
-    
-    const retryInfo = this.loadState.isRetrying 
-      ? ` (Retry ${this.loadState.retryCount}/${this.MAX_RETRIES})` 
-      : '';
-    
-    this.setStoredMessages((message) => [
-      ...message.slice(0, -1),
-      { 
-        role: "assistant", 
-        content: `Getting ready for you...${retryInfo}`,
-        loadingProgress: progress
-      },
-    ]);
+
+    const now = Date.now();
+    if (
+      progress < 100 &&
+      progress === this.lastProgressValue &&
+      now - this.lastProgressUpdate < 200
+    ) {
+      return;
+    }
+
+    this.lastProgressUpdate = now;
+    this.lastProgressValue = progress;
+
+    const { setModelLoadProgress } = useChatStore.getState();
+    setModelLoadProgress(progress);
 
     if (report.text?.includes("Finish loading") || progress >= 100) {
-      this.setStoredMessages((message) => [
-        ...message.slice(0, -1),
-        { role: "assistant", content: "" },
-      ]);
+      this.clearModelLoadState();
     }
   };
+
+  private clearModelLoadState() {
+    const { setModelLoadProgress, setModelLoadStatus } = useChatStore.getState();
+    setModelLoadProgress(null);
+    setModelLoadStatus(null);
+    this.lastProgressValue = -1;
+    this.lastProgressUpdate = 0;
+  }
 
   // Cancel current loading operation
   public cancelLoading(): void {
@@ -154,14 +174,7 @@ export default class WebLLMHelper {
       this.abortController.abort();
       this.loadState.isLoading = false;
       this.loadState.isRetrying = false;
-      
-      this.setStoredMessages((message) => [
-        ...message.slice(0, -1),
-        {
-          role: "assistant",
-          content: "Model loading canceled.",
-        },
-      ]);
+      this.clearModelLoadState();
     }
   }
 
@@ -251,7 +264,7 @@ export default class WebLLMHelper {
       error.name = ModelLoadError.NO_GPU;
       
       this.setStoredMessages((message) => [
-        ...message.slice(0, -1),
+        ...message,
         {
           role: "assistant",
           content: "⚠️ This device does not support GPU acceleration. WebLLM requires a GPU to run models.",
@@ -261,22 +274,22 @@ export default class WebLLMHelper {
       throw error;
     }
 
-    // Show initial loading message
-    this.setStoredMessages((message) => [
-      ...message.slice(0, -1),
-      {
-        role: "assistant",
-        content: "Getting ready for you...",
-        loadingProgress: 0,
-      },
-    ]);
+    // Show initial loading state
+    const { setModelLoadProgress, setModelLoadStatus } = useChatStore.getState();
+    setModelLoadProgress(0);
+    setModelLoadStatus(
+      this.loadState.isRetrying
+        ? `Retry ${this.loadState.retryCount}/${this.MAX_RETRIES}`
+        : null
+    );
 
     // Initialize embeddings (non-blocking - in background)
     // Don't wait for embeddings to complete - they can load in parallel
-    getEmbeddingsInstance().catch(error => {
-      console.warn("Failed to initialize embeddings (non-critical):", error);
-      // Embeddings failure is non-critical - main LLM can still work
-    });
+    import("./embed")
+      .then(({ getEmbeddingsInstance }) => getEmbeddingsInstance())
+      .catch(error => {
+        console.warn("Failed to initialize embeddings (non-critical):", error);
+      });
 
     // Try to load the model with retries
     let lastError: Error | null = null;
@@ -287,14 +300,8 @@ export default class WebLLMHelper {
       // On devices with strict limits, start with a safer window size
       // Try 2048 first; we may reduce further on specific errors
       this.forcedContextWindowSize = 2048;
-      this.setStoredMessages((message) => [
-        ...message.slice(0, -1),
-        {
-          role: "assistant",
-          content: "Detected a GPU with strict WebGPU limits. Optimizing settings for compatibility (reduced context window).",
-          loadingProgress: 0,
-        },
-      ]);
+      setModelLoadStatus("Optimizing for your device…");
+      setModelLoadProgress(0);
     }
 
     for (let attempt = 0; attempt <= this.MAX_RETRIES; attempt++) {
@@ -308,6 +315,7 @@ export default class WebLLMHelper {
         this.loadState.isLoading = false;
         this.loadState.isRetrying = false;
         this.abortController = null;
+        this.clearModelLoadState();
         this.engine = engine;
         this.loadedModelName = selectedModel.name;
         this.setEngine(engine);
@@ -326,14 +334,8 @@ export default class WebLLMHelper {
           const next = current > 2048 ? 2048 : current > 1024 ? 1024 : current > 512 ? 512 : 0;
           if (next >= 512 && next < current) {
             this.forcedContextWindowSize = next;
-            this.setStoredMessages((message) => [
-              ...message.slice(0, -1),
-              {
-                role: "assistant",
-                content: `Your GPU driver has a storage buffer limit. Retrying with a smaller context window (${next}).`,
-                loadingProgress: 0,
-              },
-            ]);
+            setModelLoadStatus(`Retrying with smaller context…`);
+            setModelLoadProgress(0);
             // Immediate retry without counting towards MAX_RETRIES
             attempt--; // neutralize this attempt since we'll retry with adjusted settings
             continue;
@@ -344,6 +346,7 @@ export default class WebLLMHelper {
         if (this.abortController?.signal.aborted || lastError.message === ModelLoadError.CANCELED) {
           this.loadState.isLoading = false;
           this.loadState.isRetrying = false;
+          this.clearModelLoadState();
           throw new Error(ModelLoadError.CANCELED);
         }
         
@@ -355,17 +358,11 @@ export default class WebLLMHelper {
         // Show retry message
         const isOffline = !this.isOnline();
         const retryMessage = isOffline
-          ? `⚠️ You appear to be offline. Retrying in ${this.RETRY_DELAY_MS / 1000}s... (${attempt + 1}/${this.MAX_RETRIES})`
-          : `⚠️ Loading failed. Retrying in ${this.RETRY_DELAY_MS / 1000}s... (${attempt + 1}/${this.MAX_RETRIES})`;
-        
-        this.setStoredMessages((message) => [
-          ...message.slice(0, -1),
-          {
-            role: "assistant",
-            content: retryMessage,
-            loadingProgress: 0,
-          },
-        ]);
+          ? `Offline — retry ${attempt + 1}/${this.MAX_RETRIES}`
+          : `Retrying… (${attempt + 1}/${this.MAX_RETRIES})`;
+
+        setModelLoadStatus(retryMessage);
+        setModelLoadProgress(0);
         
         // Wait before retrying (with exponential backoff)
         await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY_MS * (attempt + 1)));
@@ -376,11 +373,12 @@ export default class WebLLMHelper {
     this.loadState.isLoading = false;
     this.loadState.isRetrying = false;
     this.abortController = null;
+    this.clearModelLoadState();
     
     const errorMessage = this.formatErrorMessage(lastError);
     
     this.setStoredMessages((message) => [
-      ...message.slice(0, -1),
+      ...message,
       {
         role: "assistant",
         content: errorMessage,
@@ -414,7 +412,7 @@ export default class WebLLMHelper {
 
     // Special hint for WebGPU storage buffer limit issues
     if (errorMessage.toLowerCase().includes("maxstoragebufferspershaderstage") || errorMessage.toLowerCase().includes("max storage buffers per shader stage")) {
-      return "❌ Your GPU's WebGPU limit was exceeded by this model's default settings. Try: 1) Reducing the context window in Inference Settings, 2) Choosing a smaller model (e.g., Omni X1), or 3) Switching backend to Ollama/llama.cpp on desktop.";
+      return "❌ Your GPU's WebGPU limit was exceeded by this model's default settings. Try: 1) Reducing the context window in Inference Settings, or 2) Choosing a smaller model (e.g., Qwen 2.5 0.5B).";
     }
 
     return `❌ Failed to load model: ${error.message}. Please try a different model or refresh the page.`;
@@ -499,10 +497,10 @@ export default class WebLLMHelper {
     const safeMaxTokens = Math.min(inferenceSettings.maxTokens, safeLimits.maxTokens);
 
     // Build system content
-    let systemContent = "You are a helpful assistant. Assist the user with their questions.";
+    let systemContent = SYSTEM_PROMPT;
     
     if (customizedInstructions && isCustomizedInstructionsEnabled) {
-      systemContent += " You are also provided with the following information from the user, keep them in mind for your responses: " + customizedInstructions;
+      systemContent += `\n\n# User context #\n${customizedInstructions}`;
     }
     
     try {

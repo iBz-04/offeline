@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import React, { useEffect, useState } from "react";
-import { ModeToggle } from "./mode-toggle";
 import { toast } from "sonner";
 
 const formSchema = z.object({
@@ -56,10 +55,6 @@ export default function EditUsernameForm({ setOpen }: EditUsernameFormProps) {
 
   return (
     <Form {...form}>
-      <div className="w-full flex flex-col gap-4">
-        <FormLabel>Theme</FormLabel>
-        <ModeToggle />
-      </div>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <FormField
           control={form.control}

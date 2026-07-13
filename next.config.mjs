@@ -5,21 +5,20 @@ const nextConfig = {
     unoptimized: true,
   },
   experimental: {
-    serverComponentsExternalPackages: ['sharp', '@xenova/transformers'],
+    serverComponentsExternalPackages: ['@xenova/transformers', '@mlc-ai/web-llm'],
   },
   webpack: (config, { isServer }) => {
-    // Fixes npm packages that depend on `fs` module
+    if (isServer) {
+      config.externals = [...(config.externals || []), '@mlc-ai/web-llm'];
+    }
     if (!isServer) {
       config.resolve.fallback = {
-        ...config.resolve.fallback, // if you miss it, all the other options in fallback, specified
-        // by next.js will be dropped. Doesn't make much sense, but how it is
-        fs: false, // the solution
+        ...config.resolve.fallback,
+        fs: false,
         module: false,
         perf_hooks: false,
       };
     }
-    // This is to fix transformers.js error
-    // https://github.com/xenova/transformers.js/blob/main/examples/next-client/next.config.js
     config.resolve.alias = {
       ...config.resolve.alias,
       sharp$: false,

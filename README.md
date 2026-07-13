@@ -65,7 +65,6 @@ https://github.com/user-attachments/assets/a8c0161f-549c-42fb-a23e-a9f31738cf66
 ### AI Customization
 
 - **Custom Memory/Instructions:** Add custom system prompts and memory to personalize AI behavior
-- **Web Search Integration:** Optional real-time web search capabilities with Tavily or DuckDuckGo (when enabled)
 - **Light & Dark Mode:** Toggle between themes for comfortable usage
 - **Markdown & Code Syntax Highlighting:** Beautifully rendered markdown and syntax-highlighted code blocks
 - **Model Selection:** Easily switch between different open-source models
@@ -266,7 +265,6 @@ npm run build
 - [x] Ollama integration
 - [x] llama.cpp integration
 - [x] File embeddings (PDF, DOCX, TXT, etc.)
-- [x] Web search integration (Tavily, DuckDuckGo)
 - [x] Chat history & export
 - [x] Custom memory/instructions
 - [x] Voice message support
@@ -275,7 +273,6 @@ npm run build
 
 - [ ] Enhanced model management
 - [ ] Performance optimizations
-- [ ] Additional search backends
 
 ### Future
 
@@ -352,7 +349,6 @@ Notes:
 
 ## Configuration & Tips
 
-- Web search backends: You can choose between Tavily (requires API key) and DuckDuckGo (no key). In the UI, open Search settings and paste your Tavily key. Alternatively, you can set the environment variable `NEXT_PUBLIC_TAVILY_API_KEY` before starting the web app.
 - File embeddings: For best performance on low-spec machines, prefer smaller models (e.g., 3B) for embedding and chat.
 - Desktop llama.cpp: The Electron app uses `node-llama-cpp` under the hood. Use GGUF models. GPU acceleration depends on your platform and build.
 
@@ -362,11 +358,6 @@ Notes:
    - Update Chrome/Edge to the latest version
    - Update graphics drivers
    - Check chrome://gpu to confirm WebGPU status
-
-- Tavily key errors
-   - Make sure you’ve saved the key in the Search settings UI
-   - Or set `NEXT_PUBLIC_TAVILY_API_KEY` in your environment
-   - The app will fall back to DuckDuckGo if Tavily isn’t configured
 
 - Desktop app doesn’t start
    - Run from the `desktop` folder: `pnpm install` then `pnpm electron:dev`

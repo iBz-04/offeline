@@ -10,7 +10,7 @@ import {
 
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import EditCustomMemoryForm from "./edit-custom-memory-form";
-import { Brain } from "lucide-react";
+import { Brain } from "@econic";
 
 interface CustomMemoryDialogProps {
   open: boolean;
