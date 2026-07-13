@@ -1,0 +1,17 @@
+import { InfoPage } from "@/components/info-page";
+import { privacyPage } from "@/lib/info-pages";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy",
+};
+
+export default function PrivacyPage() {
+  return (
+    <main className="h-app overflow-y-auto px-6 py-8">
+      <div className="mx-auto w-full max-w-2xl">
+        <InfoPage config={privacyPage} />
+      </div>
+    </main>
+  );
+}
